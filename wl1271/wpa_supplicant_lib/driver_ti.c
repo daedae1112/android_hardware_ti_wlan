@@ -588,6 +588,18 @@ static int get_num_of_channels(char *country)
 
 	if (os_strcasecmp(country, "EU"))
 		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "FR"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "DE"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "ES"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "IT"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "NL"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "BE"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
 	else if (os_strcasecmp(country, "JP"))
 		channels = NUMBER_SCAN_CHANNELS_MKK1;
 	return channels;
@@ -674,8 +686,8 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 	}
 	else if( os_strncasecmp(cmd, "country", 7) == 0 ) {
 		drv->scan_channels = get_num_of_channels(cmd + 8);
-		ret = sprintf(buf,"Scan-Channels = %d\n", drv->scan_channels);
-		wpa_printf(MSG_DEBUG, "buf %s", buf);
+		wpa_printf(MSG_DEBUG, "Country '%s' -> %d channels", cmd, drv->scan_channels);
+		ret = 0;
 	}
 	else if( os_strncasecmp(cmd, "scan-channels", 13) == 0 ) {
 		int noOfChan;
