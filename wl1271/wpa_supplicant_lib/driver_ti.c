@@ -42,11 +42,6 @@
 		return( r ); \
 	}
 
-static int g_suspendopt = 0;
-
-/* keep last scan result in memory (current ap only) */
-static scan_result_t last_scan_result;
-
 /*-----------------------------------------------------------------------------
 Routine Name: check_and_get_build_channels
 Routine Description: get number of allowed channels according to a build var.
@@ -671,14 +666,14 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 		ret = 0;
 	}
 	else if( os_strcasecmp(cmd, "scan-active") == 0 ) {
-		if (!g_suspendopt) {
+		if (!drv->suspendopt) {
 			wpa_printf(MSG_DEBUG,"Scan Active command");
 			drv->scan_type =  SCAN_TYPE_NORMAL_ACTIVE;
 			ret = 0;
 		} else {
 			wpa_printf(MSG_DEBUG,"Scan Active command ignored, suspendopt=1");
 			drv->scan_type =  SCAN_TYPE_NORMAL_PASSIVE;
-			ret = -1;
+			ret = 0;
 		}
 	}
 	else if( os_strcasecmp(cmd, "scan-mode") == 0 ) {
@@ -732,13 +727,13 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 				ret = len;
 				ret += snprintf(&buf[ret], buf_len-len, " rssi %d\n", rssi);
 				// keep as cache
-				os_memcpy(&last_scan_result, cur_res, sizeof(scan_result_t));
+				os_memcpy(&drv->last_scan_res, cur_res, sizeof(scan_result_t));
 				if (cur_res->noise == 0) {
 					//noise is not implemented, use diff btw beacon & data
-					last_scan_result.noise = rssi_beacon - rssi_data;
+					drv->last_scan_res.noise = rssi_beacon - rssi_data;
 				}
 			}
-			wpa_printf(MSG_DEBUG,"level=%d, cached=%d", cur_res->level, last_scan_result.level);
+			wpa_printf(MSG_DEBUG,"level=%d, cached=%d", cur_res->level, drv->last_scan_res.level);
 		}
 	}
 #endif
@@ -766,12 +761,12 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 				if( cur_res ) {
 					cur_res->level = rssi_beacon;
 					// keep as cache
-					os_memcpy(&last_scan_result, cur_res, sizeof(scan_result_t));
+					os_memcpy(&drv->last_scan_res, cur_res, sizeof(scan_result_t));
 					if (cur_res->noise == 0) {
-						last_scan_result.noise = rssi_beacon - rssi_data;
+						drv->last_scan_res.noise = rssi_beacon - rssi_data;
 					}
 				} else {
-					last_scan_result.noise = rssi_beacon - rssi_data;
+					drv->last_scan_res.noise = rssi_beacon - rssi_data;
 				}
 			}
 			else
@@ -887,7 +882,7 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 	}
 	else if( os_strncasecmp(cmd, "setsuspendopt ", 14) == 0 ) {
 		/* stub to remove errors in ICS */
-		g_suspendopt = atoi(cmd + 14);
+		drv->suspendopt = atoi(cmd + 14);
 		ret = 0;
 	}
 	else {
@@ -995,8 +990,6 @@ void * wpa_driver_tista_init(void *ctx, const char *ifname)
 		os_free(drv);
 		return NULL;
 	}
-
-	os_memset(&last_scan_result, 0, sizeof(scan_result_t));
 
 	drv->ctx = ctx;
 	os_strncpy(drv->ifname, ifname, sizeof(drv->ifname));
@@ -1491,9 +1484,12 @@ int wpa_driver_tista_signal_poll(void *priv, struct wpa_signal_info *si)
 			si->frequency      = cur_res->freq;
 			si->current_signal = cur_res->level;
 		} else {
-			si->frequency      = last_scan_result.freq;
+			si->frequency      = drv->last_scan_res.freq;
 		}
-		si->current_noise  = last_scan_result.noise;
+		si->current_noise = drv->last_scan_res.noise;
+		if (si->current_noise < 0) {
+			si->current_noise = 0 - si->current_noise;
+		}
 	}
 
 	return 0;

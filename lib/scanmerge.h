@@ -23,19 +23,6 @@
 
 #define SCAN_MERGE_COUNT        4
 
-/*
- * Structure definitions are in :
- * external/wpa_supplicant_6/wpa_supplicant/src/drivers/driver.h
- */
-
-typedef
-#ifdef WPA_SUPPLICANT_VER_0_6_X
-    struct wpa_scan_res
-#else
-    struct wpa_scan_result
-#endif
-scan_result_t;
-
 typedef struct {
     u8 ssid[MAX_SSID_LEN];
     size_t ssid_len;

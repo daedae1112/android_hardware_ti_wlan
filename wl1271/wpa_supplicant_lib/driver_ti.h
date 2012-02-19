@@ -57,6 +57,19 @@
 
 #define MAX_NUMBER_SEQUENTIAL_ERRORS	4
 
+/*
+ * Structure definitions are in :
+ * external/wpa_supplicant_6/wpa_supplicant/src/drivers/driver.h
+ */
+
+typedef
+#ifdef WPA_SUPPLICANT_VER_0_6_X
+    struct wpa_scan_res
+#else
+    struct wpa_scan_result
+#endif
+scan_result_t;
+
 typedef enum {
 	BLUETOOTH_COEXISTENCE_MODE_ENABLED = 0,
 	BLUETOOTH_COEXISTENCE_MODE_DISABLED,
@@ -80,6 +93,8 @@ struct wpa_driver_ti_data {
 #ifdef CONFIG_WPS
 	struct wpabuf *probe_req_ie;    /* Store the latest probe_req_ie for WSC */
 #endif
+	int suspendopt;
+	scan_result_t last_scan_res;    /* keep last scan result in memory (current ssid) */
 	int errors;			/* Number of sequential errors */
 };
 #endif
