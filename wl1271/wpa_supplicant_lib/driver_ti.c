@@ -42,6 +42,8 @@
 		return( r ); \
 	}
 
+static int g_suspendopt = 0;
+
 /*-----------------------------------------------------------------------------
 Routine Name: check_and_get_build_channels
 Routine Description: get number of allowed channels according to a build var.
@@ -857,6 +859,11 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 				}
 			}
 		}
+	}
+	else if( os_strncasecmp(cmd, "setsuspendopt", 13) == 0 ) {
+		/* stub for future use, to remove errors in ICS */
+		g_suspendopt = atoi(cmd +13 );
+		ret = 0;
 	}
 	else {
 		wpa_printf(MSG_DEBUG,"Unsupported command");
