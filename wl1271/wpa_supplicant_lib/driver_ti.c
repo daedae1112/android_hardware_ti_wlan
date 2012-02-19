@@ -667,9 +667,15 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 		ret = 0;
 	}
 	else if( os_strcasecmp(cmd, "scan-active") == 0 ) {
-		wpa_printf(MSG_DEBUG,"Scan Active command");
-		drv->scan_type =  SCAN_TYPE_NORMAL_ACTIVE;
-		ret = 0;
+		if (!g_suspendopt) {
+			wpa_printf(MSG_DEBUG,"Scan Active command");
+			drv->scan_type =  SCAN_TYPE_NORMAL_ACTIVE;
+			ret = 0;
+		} else {
+			wpa_printf(MSG_DEBUG,"Scan Active command ignored, suspendopt=1");
+			drv->scan_type =  SCAN_TYPE_NORMAL_PASSIVE;
+			ret = -1;
+		}
 	}
 	else if( os_strcasecmp(cmd, "scan-mode") == 0 ) {
 		wpa_printf(MSG_DEBUG,"Scan Mode command");
@@ -860,9 +866,9 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 			}
 		}
 	}
-	else if( os_strncasecmp(cmd, "setsuspendopt", 13) == 0 ) {
-		/* stub for future use, to remove errors in ICS */
-		g_suspendopt = atoi(cmd +13 );
+	else if( os_strncasecmp(cmd, "setsuspendopt ", 14) == 0 ) {
+		/* stub to remove errors in ICS */
+		g_suspendopt = atoi(cmd + 14);
 		ret = 0;
 	}
 	else {
