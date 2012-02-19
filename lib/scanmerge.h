@@ -23,6 +23,11 @@
 
 #define SCAN_MERGE_COUNT        4
 
+/*
+ * Structure definitions are in :
+ * external/wpa_supplicant_6/wpa_supplicant/src/drivers/driver.h
+ */
+
 typedef
 #ifdef WPA_SUPPLICANT_VER_0_6_X
     struct wpa_scan_res

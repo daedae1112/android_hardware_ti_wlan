@@ -216,7 +216,7 @@ int wpa_driver_tista_parse_custom(void *ctx, const void *custom)
 			/* Dm: wpa_printf(MSG_INFO,"wpa_supplicant - Link Speed = %u", pStaDrv->link_speed ); */
 			break;
 		default:
-			wpa_printf(MSG_DEBUG, "Unknown event");
+			wpa_printf(MSG_DEBUG, "Unknown event 0x%x", pData->EvParams.uEventType);
 			break;
 	}
 
@@ -1291,7 +1291,7 @@ static struct wpa_scan_results *wpa_driver_tista_get_scan_results(void *priv)
 {
 	struct wpa_driver_ti_data *drv = priv;
 	struct wpa_scan_results *res;
-	struct wpa_scan_res **tmp;
+	scan_result_t **tmp;
 	unsigned ap_num;
 
 	TI_CHECK_DRIVER( drv->driver_is_loaded, NULL );
@@ -1302,12 +1302,12 @@ static struct wpa_scan_results *wpa_driver_tista_get_scan_results(void *priv)
 
 	wpa_printf(MSG_DEBUG, "Actual APs number %d", res->num);
 	ap_num = (unsigned)scan_count(drv) + res->num;
-	tmp = os_realloc(res->res, ap_num * sizeof(struct wpa_scan_res *));
+	tmp = os_realloc(res->res, ap_num * sizeof(scan_result_t *));
 	if (tmp == NULL)
 		return res;
 	res->num = scan_merge(drv, tmp, drv->force_merge_flag, res->num, ap_num);
 	wpa_printf(MSG_DEBUG, "After merge, APs number %d", res->num);
-	tmp = os_realloc(tmp, res->num * sizeof(struct wpa_scan_res *));
+	tmp = os_realloc(tmp, res->num * sizeof(scan_result_t *));
 	res->res = tmp;
 	return res;
 }
@@ -1328,14 +1328,14 @@ Compare function for sorting scan results. Return >0 if @b is considered better.
 -----------------------------------------------------------------------------*/
 static int wpa_driver_tista_scan_result_compare(const void *a, const void *b)
 {
-	const struct wpa_scan_result *wa = a;
-	const struct wpa_scan_result *wb = b;
+	const scan_result_t *wa = a;
+	const scan_result_t *wb = b;
 
 	return( wb->level - wa->level );
 }
 
 static int wpa_driver_tista_get_scan_results(void *priv,
-					      struct wpa_scan_result *results,
+					      scan_result_t* results,
 					      size_t max_size)
 {
 	struct wpa_driver_ti_data *drv = priv;
@@ -1351,7 +1351,7 @@ static int wpa_driver_tista_get_scan_results(void *priv,
 	/* Merge new results with previous */
         ap_num = scan_merge(drv, results, drv->force_merge_flag, ap_num, max_size);
 	wpa_printf(MSG_DEBUG, "After merge, APs number %d", ap_num);
-	qsort(results, ap_num, sizeof(struct wpa_scan_result),
+	qsort(results, ap_num, sizeof(scan_result_t),
 		wpa_driver_tista_scan_result_compare);
 	return ap_num;
 }
