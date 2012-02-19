@@ -94,6 +94,11 @@ ifeq ($(WPA_SUPPL_APPROX_USE_RSSI),true)
 L_CFLAGS += -DAPPROX_USE_RSSI_COMMAND
 endif
 
+# backport from WPA supplicant 8
+ifeq ($(WPA_SUPPL_WITH_SIGNAL_POLL),true)
+L_CFLAGS += -DWPA_SUPPL_WITH_SIGNAL_POLL
+endif
+
 ########################
  
 include $(CLEAR_VARS)

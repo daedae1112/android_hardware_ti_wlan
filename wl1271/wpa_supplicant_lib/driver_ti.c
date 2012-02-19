@@ -44,6 +44,9 @@
 
 static int g_suspendopt = 0;
 
+/* keep last scan result in memory (current ap only) */
+static scan_result_t last_scan_result;
+
 /*-----------------------------------------------------------------------------
 Routine Name: check_and_get_build_channels
 Routine Description: get number of allowed channels according to a build var.
@@ -302,10 +305,11 @@ static int wpa_driver_tista_scan( void *priv, const u8 *ssid, size_t ssid_len )
 	res = wpa_driver_tista_private_send(priv, TIWLN_802_11_START_APP_SCAN_SET, &scanParams, sizeof(scanParams), NULL, 0);
 
 	if (0 != res) {
-		wpa_printf(MSG_ERROR, "ERROR - Failed to do tista scan!");
 		if (wpa_s->scanning) {
 			res = 0;
-			wpa_printf(MSG_ERROR, "Ongoing Scan action...");
+			wpa_printf(MSG_WARNING, "Already scanning...");
+		} else {
+			wpa_printf(MSG_ERROR, "ERROR - Failed to do tista scan!");
 		}
 	} else {
 		wpa_printf(MSG_DEBUG, "wpa_driver_tista_scan success");
@@ -727,7 +731,14 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 				os_memcpy((void *)buf, (void *)(p_ssid->ssid), len);
 				ret = len;
 				ret += snprintf(&buf[ret], buf_len-len, " rssi %d\n", rssi);
+				// keep as cache
+				os_memcpy(&last_scan_result, cur_res, sizeof(scan_result_t));
+				if (cur_res->noise == 0) {
+					//noise is not implemented, use diff btw beacon & data
+					last_scan_result.noise = rssi_beacon - rssi_data;
+				}
 			}
+			wpa_printf(MSG_DEBUG,"level=%d, cached=%d", cur_res->level, last_scan_result.level);
 		}
 	}
 #endif
@@ -752,8 +763,16 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 				if( !wpa_s )
 					return( ret );
 				cur_res = scan_get_by_bssid(drv, wpa_s->bssid);
-				if( cur_res )
+				if( cur_res ) {
 					cur_res->level = rssi_beacon;
+					// keep as cache
+					os_memcpy(&last_scan_result, cur_res, sizeof(scan_result_t));
+					if (cur_res->noise == 0) {
+						last_scan_result.noise = rssi_beacon - rssi_data;
+					}
+				} else {
+					last_scan_result.noise = rssi_beacon - rssi_data;
+				}
 			}
 			else
 			{
@@ -976,6 +995,8 @@ void * wpa_driver_tista_init(void *ctx, const char *ifname)
 		os_free(drv);
 		return NULL;
 	}
+
+	os_memset(&last_scan_result, 0, sizeof(scan_result_t));
 
 	drv->ctx = ctx;
 	os_strncpy(drv->ifname, ifname, sizeof(drv->ifname));
@@ -1439,6 +1460,47 @@ static int wpa_driver_tista_set_operstate(void *priv, int state)
 	return wpa_driver_wext_set_operstate(drv->wext, state);
 }
 
+// backport from wpa supplicant 8
+#ifdef WPA_SUPPL_WITH_SIGNAL_POLL
+#define RSSI_CMD      "RSSI"
+#define LINKSPEED_CMD "LINKSPEED"
+int wpa_driver_tista_signal_poll(void *priv, struct wpa_signal_info *si)
+{
+	char buf[MAX_DRV_CMD_SIZE];
+	struct wpa_driver_ti_data *drv = priv;
+	struct wpa_supplicant *wpa_s = (struct wpa_supplicant *)(drv->ctx);
+	scan_result_t *cur_res;
+	char *prssi;
+	int res;
+
+	os_memset(si, 0, sizeof(*si));
+	res = wpa_driver_tista_driver_cmd(priv, RSSI_CMD, buf, sizeof(buf));
+	/* Answer: SSID rssi -Val */
+	if (res < 0)
+		return res;
+	prssi = strcasestr(buf, RSSI_CMD);
+	if (!prssi)
+		return -1;
+
+	si->current_signal = atoi(prssi + strlen(RSSI_CMD) + 1);
+
+	if (wpa_s) {
+		si->current_txrate = wpa_s->link_speed / 1000;
+		cur_res = scan_get_by_bssid(drv, wpa_s->bssid);
+		if( cur_res && cur_res->freq ) {
+			si->frequency      = cur_res->freq;
+			si->current_signal = cur_res->level;
+		} else {
+			si->frequency      = last_scan_result.freq;
+		}
+		si->current_noise  = last_scan_result.noise;
+	}
+
+	return 0;
+}
+#endif
+
+
 const struct wpa_driver_ops wpa_driver_custom_ops = {
 	.name = TIWLAN_DRV_NAME,
 	.desc = "TI Station Driver (1271)",
@@ -1470,5 +1532,8 @@ const struct wpa_driver_ops wpa_driver_custom_ops = {
 	.set_mode = wpa_driver_tista_set_mode,
 	.set_probe_req_ie = wpa_driver_tista_set_probe_req_ie,
 #endif
-	.driver_cmd = wpa_driver_tista_driver_cmd
+	.driver_cmd = wpa_driver_tista_driver_cmd,
+#ifdef WPA_SUPPL_WITH_SIGNAL_POLL
+	.signal_poll = wpa_driver_tista_signal_poll,
+#endif
 };
