@@ -2,17 +2,17 @@
  * cu_hostapd.c
  *
  * Copyright 2001-2010 Texas Instruments, Inc. - http://www.ti.com/
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and  
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -43,22 +43,21 @@ static void removeKey( TI_UINT8 index);
 void CuHostapd_PrintMenu(void)
 {
     int  i;
-    char *pKeyDesc;
     TI_BOOL keyInFile;
 
-    for (i =0 ; i< HOSTAPD_PARAM_LAST ; i++) 
+    for (i =0 ; i< HOSTAPD_PARAM_LAST ; i++)
     {
         keyInFile = IsKeyInDictionary(&hostapdKeysList[i]);
-        printf("%d. %s => %s %s\n", (i+1), hostapdKeysList[i].keyName, 
+        printf("%d. %s => %s %s\n", (i+1), hostapdKeysList[i].keyName,
                &hostapdKeysList[i].keyDescription, keyInFile ? " ":"N/A") ;
     }
 }
 
-static char* GetValueByKeyName(char *pKeyName, TI_BOOL *refKeyModified)
+static PS8 GetValueByKeyName(PS8 pKeyName, TI_BOOL *refKeyModified)
 {
     int i;
 
-    for (i =0 ; i< pDictionary->uNumOfKeysFound ; i++) 
+    for (i =0 ; i< pDictionary->uNumOfKeysFound ; i++)
     {
      if (0 == os_strcmp((PS8)pDictionary->keys[i].key, pKeyName))
         {
@@ -75,9 +74,9 @@ static TI_BOOL IsKeyInDictionary(keyInfo *pKeyInfo)
 {
     int i;
 
-    for (i =0 ; i< pDictionary->uNumOfKeysFound ; i++) 
+    for (i =0 ; i< pDictionary->uNumOfKeysFound ; i++)
     {
-        if (0 == os_strcmp((PS8)pDictionary->keys[i].key, (PS8)pKeyInfo->keyName)) 
+        if (0 == os_strcmp((PS8)pDictionary->keys[i].key, (PS8)pKeyInfo->keyName))
         {
             return TI_TRUE;
         }
@@ -97,10 +96,10 @@ void CuHostapd_ShowStatus(void)
     int     i;
     char    *pVal = NULL;
     TI_BOOL bKeyWasModified = TI_FALSE;
-    
-    for (i =0 ; i < HOSTAPD_PARAM_LAST ; i++) 
+
+    for (i =0 ; i < HOSTAPD_PARAM_LAST ; i++)
     {
-        pVal = GetValueByKeyName(hostapdKeysList[i].keyName, &bKeyWasModified);
+        pVal = GetValueByKeyName((PS8)hostapdKeysList[i].keyName, &bKeyWasModified);
         printf("%d. %s%s = %s\n", (i+1), (bKeyWasModified == TI_TRUE? "*" : "") ,
                hostapdKeysList[i].keyName, pVal) ;
     }
@@ -117,11 +116,11 @@ void CuHostapd_UpdateKeyInDictionary(TKeyValuePair *pKeyVal)
 	{
 		if (os_strcmp((PS8)pDictionary->keys[i].key, (PS8)pKeyVal->key) == 0) /* if key found store it in dictionary */
 		{
-            
+
             if( pKeyVal->uValueLength == 0 || pKeyVal->uValueLength > MAX_VALUE_LENGTH)
             {
                 /* Remove record */
-                printf("Remove key(%d) = %s, value = %s\n", i, pDictionary->keys[i].key, pDictionary->keys[i].value); 
+                printf("Remove key(%d) = %s, value = %s\n", i, pDictionary->keys[i].key, pDictionary->keys[i].value);
                 removeKey(i);
             }
             else
@@ -155,8 +154,8 @@ void CuHostapd_UpdateKeyInDictionary(TKeyValuePair *pKeyVal)
 
         i = pDictionary->uNumOfKeysFound;
 
-        os_memcpy((PVOID)pDictionary->keys[i].key, (PVOID)pKeyVal->key, (PVOID)pKeyVal->uKeyLength);
-          
+        os_memcpy((PVOID)pDictionary->keys[i].key, (PVOID)pKeyVal->key, pKeyVal->uKeyLength);
+
         pDictionary->keys[i].key[pKeyVal->uKeyLength] = '\0';
         os_memcpy((PVOID)pDictionary->keys[i].value, (PVOID)pKeyVal->value, pKeyVal->uValueLength);
         pDictionary->keys[i].value[pKeyVal->uValueLength] = '\0';
@@ -182,14 +181,14 @@ void CuHostapd_Destroy (void)
 void CuHostapd_LoadConfFileToMemory (void)
 {
    FILE	 *pFile;
-   
-   
+
+
    /* Duplicate the original file and work on it only from now on */
    CopyFile((TI_UINT8*)HOSTAPD_FILE_NAME_ORIGINAL, (TI_UINT8*)HOSTAPD_FILE_NAME_TEMP);
 
    pFile = os_fopen (HOSTAPD_FILE_NAME_ORIGINAL, OS_FOPEN_READ);
 
-   if (pFile == NULL) 
+   if (pFile == NULL)
    {
        perror ("\nError opening file\n");
        return;
@@ -205,12 +204,12 @@ void CuHostapd_LoadConfFileToMemory (void)
 
 static void FillDictionary(FILE *pFile,  TDictionary *pDic)
 {
-   TI_UINT8	 line[100];
-   TI_UINT8	 i=0;
+   TI_UINT8 line[100];
+   TI_UINT8 i=0;
 
    pDic->uNumOfKeysFound = 0;
 
-   while ( os_fgets(line, 99, (PVOID)pFile) != NULL )
+   while ( os_fgets((PS8)line, 99, (PVOID)pFile) != NULL )
    {
 	   if (IsLineContainsKey(line))
 	   {
@@ -224,32 +223,29 @@ static void FillDictionary(FILE *pFile,  TDictionary *pDic)
 
 static void PrintDictionary(TDictionary *pDic)
 {
-	int i;
+    int i;
 
-	printf("Dictionary Keys Values list:\n");
+    printf("Dictionary Keys Values list:\n");
     for (i=0 ; i< pDic->uNumOfKeysFound ; i++)
-	{
-		printf("%d. %s = %s  \n", i, pDic->keys[i].key ,pDic->keys[i].value);
-	}
+    {
+        printf("%d. %s = %s  \n", i, pDic->keys[i].key ,pDic->keys[i].value);
+    }
 }
 
 
 static int IsLineContainsKey(TI_UINT8 *pLine)
 {
-
      if ((*pLine >= 'a' && *pLine <= 'z') || (*pLine >= 'A' && *pLine <= 'Z'))
-	 {
-	     return 1;
-	 }
-
-	 return 0;
-	 
+     {
+         return 1;
+     }
+     return 0;
 };
 
 
 static void GetKeyValueFromLine(TI_UINT8 *pLine, TKeyValuePair *pKeyValPair)
 {
-	
+
 	TI_UINT8 endOfLineDelimiter = 10;
 	TI_UINT8 *pTI_UINT8 = pLine;
 	TI_UINT8 i=0;
@@ -287,46 +283,43 @@ static void GetKeyValueFromLine(TI_UINT8 *pLine, TKeyValuePair *pKeyValPair)
 
 static void FlushDictionaryToFile(TI_UINT8 *fileName, TDictionary *pDic)
 {
-	FILE	*pFile;
+    FILE *pFile;
     int i=0;
-	
-	TI_UINT8 *header = "\n\n#####################  HOSTAPD Configuration File - TEXAS INSTRUMENTS #####################\n";
+    PS8 header = "\n\n#####################  HOSTAPD Configuration File - TEXAS INSTRUMENTS #####################\n";
 
-	pFile = os_fopen (fileName, OS_FOPEN_WRITE);
+    pFile = os_fopen((PS8) fileName, OS_FOPEN_WRITE);
     if(pFile == NULL)
     {
         printf("Can't open file %s\n", fileName);
         return;
     }
-	fprintf(pFile, "%s\n\n", header);
+    fprintf(pFile, "%s\n\n", header);
 
-	for (i=0 ; i< pDic->uNumOfKeysFound ; i++)
-	{
-		fprintf(pFile, "%s=%s\n", pDic->keys[i].key, pDic->keys[i].value);
-	}
+    for (i=0 ; i< pDic->uNumOfKeysFound ; i++)
+    {
+        fprintf(pFile, "%s=%s\n", pDic->keys[i].key, pDic->keys[i].value);
+    }
 
     /* After flushing reset the 'Modified' flag */
     for (i =0 ; i < MAX_NUM_OF_KEYS ; i++)
     {
         pDic->aKeyModifiedFlag[i] = TI_FALSE;
     }
-
-	fclose(pFile);
-
+    fclose(pFile);
 }
 
 
 static void CopyFile(TI_UINT8 *filePathSource, TI_UINT8 *filePathDest)
 {
-    FILE	*pFileSource, *pFileDest;
-    int     uFileSize = 0; 
+    FILE    *pFileSource, *pFileDest;
+    int     uFileSize = 0;
     char    *pFileBuffer;
 
-  
-    pFileSource = os_fopen (filePathSource, OS_FOPEN_READ_BINARY);
-    pFileDest = os_fopen (filePathDest, OS_FOPEN_WRITE_BINARY);
-    
-    if (pFileSource == 0 || pFileDest == 0) 
+
+    pFileSource = os_fopen((PS8) filePathSource, OS_FOPEN_READ_BINARY);
+    pFileDest = os_fopen((PS8) filePathDest, OS_FOPEN_WRITE_BINARY);
+
+    if (pFileSource == 0 || pFileDest == 0)
     {
         printf("\n Error while opening hostapd config file! \n");
         return;
@@ -341,7 +334,7 @@ static void CopyFile(TI_UINT8 *filePathSource, TI_UINT8 *filePathDest)
     os_MemoryFree(pFileBuffer);
     os_fclose((PVOID)pFileDest);
     os_fclose((PVOID)pFileSource);
-  
+
 }
 
 static void removeKey( TI_UINT8 index)

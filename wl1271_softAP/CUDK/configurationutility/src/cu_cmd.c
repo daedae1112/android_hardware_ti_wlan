@@ -33,7 +33,6 @@
 
 #include <stdio.h>
 
-
 #include "cu_osapi.h"
 #include "TWDriver.h"
 #include "convert.h"
@@ -52,12 +51,12 @@
 #define print_available_values(arr) \
         { \
             S32 i; \
-            for(i=0; i<SIZE_ARR(arr); i++) \
-                os_error_printf(CU_MSG_INFO2, (PS8)"%d - %s%s", arr[i].value, arr[i].name, (i>=SIZE_ARR(arr)-1) ? (PS8)"\n" : (PS8)", " ); \
+            for(i=0; i < (S32)SIZE_ARR(arr); i++) \
+                os_error_printf(CU_MSG_INFO2, (PS8)"%d - %s%s", arr[i].value, arr[i].name, (i>=(S32)SIZE_ARR(arr)-1) ? (PS8)"\n" : (PS8)", " ); \
         }
 
 #define CU_CMD_FIND_NAME_ARRAY(index, arr, val) \
-        for ( index = 0; index < SIZE_ARR(arr); index++ ) \
+        for ( index = 0; index < (S32)SIZE_ARR(arr); index++ ) \
             if ( arr[ index ].value == (val) ) \
                 break; \
 
@@ -74,6 +73,7 @@
 #define NVS_FILE_TX_PARAMETERS_UPDATE   0
 #define NVS_FILE_RX_PARAMETERS_UPDATE   1
 
+#define TI_INTF_NAME "tiap0"
 
 /* local types */
 /***************/
@@ -995,6 +995,12 @@ THandle CuCmd_GetCuWpaHandle (THandle hCuCmd)
 }
 #endif
 
+/* stub to reduce warnings, do nothing */
+static U16 check_parms(ConParm_t parm[], U16 nParms)
+{
+    return (U16) (nParms && parm != NULL);
+}
+
 VOID CuCmd_Show_Status(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
@@ -1003,7 +1009,9 @@ VOID CuCmd_Show_Status(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     OS_802_11_SSID ssid;
     TMacAddr bssid;
     U32 channel, threadid=0;
-    U32 status ;
+    U32 status;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCmd_GetDeviceStatus(hCuCmd))
     {
@@ -1042,6 +1050,8 @@ VOID CuCmd_BssidList(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     U32 SizeOfBssiList=0;
     OS_802_11_BSSID_LIST_EX* bssidList;
     TMacAddr bssid;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_Get_BssidList_Size(pCuCmd->hCuCommon, &SizeOfBssiList))
     {
@@ -1097,6 +1107,8 @@ VOID CuCmd_FullBssidList(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     OS_802_11_BSSID_LIST_EX* bssidList;
     TMacAddr bssid;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_Get_BssidList_Size(pCuCmd->hCuCommon, &SizeOfBssiList)) return;
 
     /* allocate the bssidList */
@@ -1134,6 +1146,8 @@ VOID CuCmd_StartEnrolleePIN(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if (pCuCmd->hWpaCore == NULL)
     {
         os_error_printf(CU_MSG_ERROR, (PS8)"ERROR - Cannot start Enrollee without connection to supplicant\n");
@@ -1148,6 +1162,8 @@ VOID CuCmd_StartEnrolleePBC(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if (pCuCmd->hWpaCore == NULL)
     {
         os_error_printf(CU_MSG_ERROR, (PS8)"ERROR - Cannot start Enrollee push button without connection to supplicant\n");
@@ -1161,6 +1177,9 @@ VOID CuCmd_StartEnrolleePBC(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_StopEnrollee(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     if (pCuCmd->hWpaCore == NULL)
     {
         os_error_printf(CU_MSG_ERROR, (PS8)"ERROR - Cannot Stop Enrollee without connection to supplicant\n");
@@ -1174,6 +1193,8 @@ VOID CuCmd_StopEnrollee(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_SetPin(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if (pCuCmd->hWpaCore == NULL)
     {
@@ -1259,6 +1280,8 @@ VOID CuCmd_Disassociate(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if(pCuCmd->hWpaCore == NULL)
     {
         OS_802_11_SSID ssid;
@@ -1308,6 +1331,8 @@ VOID CuCmd_ModifyConnectMode(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32      i;
 
+    check_parms(parm, nParms);
+
     if( nParms == 0 )
     {
         U32 uConnectMode;
@@ -1340,11 +1365,12 @@ VOID CuCmd_ModifyChannel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if( nParms == 0 )
     {
         U8 desiredChannel = 0;
         U32 currentChannel = 0;
-
 
         if(OK != CuCommon_GetU8(pCuCmd->hCuCommon, SITE_MGR_DESIRED_CHANNEL_PARAM, &desiredChannel)) return;
         if(OK != CuOs_GetCurrentChannel(pCuCmd->hCuWext, &currentChannel)) return;
@@ -1360,6 +1386,8 @@ VOID CuCmd_ModifyChannel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_GetTxRate(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if( nParms == 0)
     {
@@ -1378,6 +1406,8 @@ VOID CuCmd_ModifyBssType(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32 BssType;
     S32 i;
+
+    check_parms(parm, nParms);
 
     if( nParms == 0 )
     {
@@ -1432,6 +1462,8 @@ VOID CuCmd_ModifyFragTh(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     S32 FragTh;
 
+    check_parms(parm, nParms);
+
     if( nParms == 0 )
     {
         if(OK != CuOs_GetFragTh(pCuCmd->hCuWext, &FragTh)) return;
@@ -1448,6 +1480,8 @@ VOID CuCmd_ModifyRtsTh(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     S32 RtsTh;
+
+    check_parms(parm, nParms);
 
     if( nParms == 0 )
     {
@@ -1470,6 +1504,8 @@ VOID CuCmd_ModifyPreamble(THandle hCuCmd, ConParm_t parm[], U16 nParms)
         { PREAMBLE_LONG,              (PS8)"PREAMBLE_LONG" },
         { PREAMBLE_SHORT,             (PS8)"PREAMBLE_SHORT" }
     };
+
+    check_parms(parm, nParms);
 
     if(nParms)
     {
@@ -1503,6 +1539,8 @@ VOID CuCmd_ModifyShortSlot(THandle hCuCmd, ConParm_t parm[], U16 nParms)
         { PHY_SLOT_TIME_SHORT,             (PS8)"PHY_SLOT_TIME_SHORT" }
     };
 
+    check_parms(parm, nParms);
+
     if(nParms)
     {
         SlotTime = parm[0].value;
@@ -1531,6 +1569,8 @@ VOID CuCmd_RadioOnOff(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32      on_off;
 
+    check_parms(parm, nParms);
+
     if(nParms)
     {
         on_off = parm[0].value;
@@ -1538,10 +1578,11 @@ VOID CuCmd_RadioOnOff(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     }
     else
     {
-        if(OK != CuCommon_GetU32(pCuCmd->hCuCommon, SME_RADIO_ON_PARAM, &on_off)) {
-            os_error_printf(CU_MSG_ERROR, (PS8)"CuCmd_RadioOnOff error, Cannot get radio state!\n");
-            return;
-    }
+        if(OK != CuCommon_GetU32(pCuCmd->hCuCommon, SME_RADIO_ON_PARAM, &on_off))
+        {
+             os_error_printf(CU_MSG_ERROR, (PS8)"CuCmd_RadioOnOff error, Cannot get radio state!\n");
+             return;
+        }
         os_error_printf(CU_MSG_ERROR, (PS8)"Radio state = %s\n", on_off ? "ON" : "OFF");
         os_error_printf(CU_MSG_ERROR, (PS8)"Turn radio on/off. 0=OFF, 1=ON\n");
     }
@@ -1553,6 +1594,8 @@ VOID CuCmd_GetSelectedBssidInfo(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_SSID ssid;
     TMacAddr bssid;
+
+    check_parms(parm, nParms);
 
     if(OK != CuOs_Get_SSID(pCuCmd->hCuWext, &ssid)) return;
     if(OK != CuOs_Get_BSSID(pCuCmd->hCuWext, bssid)) return;
@@ -1568,6 +1611,8 @@ VOID CuCmd_GetRsiiLevel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     S8 dRssi, bRssi;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetRssi(pCuCmd->hCuCommon, &dRssi, &bRssi)) return;
     /* need the 0xffffff00 to get negative value display */
     os_error_printf(CU_MSG_INFO2, (PS8)"Current dataRSSI=%d  beaconRssi=%d\n", dRssi?dRssi|0xffffff00:dRssi, bRssi?bRssi|0xffffff00:bRssi);
@@ -1578,6 +1623,8 @@ VOID CuCmd_GetSnrRatio(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32 dSnr, bSnr;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetSnr(pCuCmd->hCuCommon, &dSnr, &bSnr)) return;
     os_error_printf(CU_MSG_INFO2, (PS8)"Current dataSNR=%d   beaconSnr=%d\n", dSnr, bSnr);
 }
@@ -1585,6 +1632,8 @@ VOID CuCmd_GetSnrRatio(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ShowTxPowerLevel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     S32 txPowerLevel;
     if(OK != CuOs_GetTxPowerLevel(pCuCmd->hCuWext, &txPowerLevel)) return;
@@ -1597,6 +1646,8 @@ VOID CuCmd_ShowTxPowerTable(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TpowerLevelTable_t txPowerLevel;
     S32 i, res;
+
+    check_parms(parm, nParms);
 
     res = CuCommon_GetBuffer(pCuCmd->hCuCommon, REGULATORY_DOMAIN_TX_POWER_LEVEL_TABLE_PARAM, &txPowerLevel, sizeof(txPowerLevel));
 
@@ -1661,7 +1712,6 @@ VOID CuCmd_ModifyState_802_11d(THandle hCuCmd, ConParm_t parm[], U16 nParms)
             if(OK != CuCommon_GetU32(pCuCmd->hCuCommon, TIWLN_REG_DOMAIN_GET_802_11H, &Enabled_802_11h)) return;
             if(Enabled_802_11h && (!Enabled_802_11d))
                 os_error_printf(CU_MSG_INFO2, (PS8)"802_11d cannot be disabled while 802_11h is enabled!!\n" );
-
         }
         else
         {
@@ -1674,6 +1724,8 @@ VOID CuCmd_ModifyState_802_11h(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32 Enabled_802_11h;
+
+    check_parms(parm, nParms);
 
     if(nParms == 0)
     {
@@ -1694,6 +1746,8 @@ VOID CuCmd_ModifyState_802_11h(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_D_Country_2_4Ie(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if( nParms == 0 )
     {
@@ -1732,6 +1786,8 @@ VOID CuCmd_D_Country_2_4Ie(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_D_Country_5Ie(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if( nParms == 0 )
     {
@@ -1774,6 +1830,8 @@ VOID CuCmd_ModifyDfsRange(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     U16 minDFS_channelNum;
     U16 maxDFS_channelNum;
 
+    check_parms(parm, nParms);
+
     if( nParms == 0 )
     {
         if(OK != CuCommon_GetDfsChannels(pCuCmd->hCuCommon, &minDFS_channelNum, &maxDFS_channelNum)) return;
@@ -1797,6 +1855,8 @@ VOID CuCmd_SetBeaconFilterDesiredState(THandle hCuCmd, ConParm_t parm[], U16 nPa
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if( nParms == 0 )
     {
         print_available_values(BeaconFilter_use);
@@ -1812,6 +1872,8 @@ VOID CuCmd_GetBeaconFilterDesiredState(THandle hCuCmd, ConParm_t parm[], U16 nPa
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U8 beaconFilterDesiredState = 0;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetU8(pCuCmd->hCuCommon, TIWLN_802_11_BEACON_FILTER_DESIRED_STATE_GET, &beaconFilterDesiredState)) return;
 
     os_error_printf(CU_MSG_INFO2, (PS8)"Desired State is %s\n", (beaconFilterDesiredState == 0)?"FILTER INACTIVE":"FILTER ACTIVE" );
@@ -1822,6 +1884,8 @@ VOID CuCmd_ModifySupportedRates(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     rates_t SupportedRates;
     S32 i;
+
+    check_parms(parm, nParms);
 
     if( nParms == 0 )
     {
@@ -1889,6 +1953,8 @@ VOID CuCmd_SendHealthCheck(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if (OK != CuCommon_SetU32(pCuCmd->hCuCommon, HEALTH_MONITOR_CHECK_DEVICE, TRUE)) return;
 
     os_error_printf(CU_MSG_INFO2, (PS8)"Send health check...\n");
@@ -1898,6 +1964,8 @@ VOID CuCmd_EnableRxDataFilters(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if (OK != CuCommon_SetU32(pCuCmd->hCuCommon, TIWLN_ENABLE_DISABLE_RX_DATA_FILTERS, TRUE)) return;
 
     os_error_printf(CU_MSG_INFO2, (PS8)"Enabling Rx data filtering...\n");
@@ -1906,6 +1974,8 @@ VOID CuCmd_EnableRxDataFilters(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_DisableRxDataFilters(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if (OK != CuCommon_SetU32(pCuCmd->hCuCommon, TIWLN_ENABLE_DISABLE_RX_DATA_FILTERS, FALSE)) return;
 
@@ -1919,6 +1989,8 @@ VOID CuCmd_AddRxDataFilter(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     TRxDataFilterRequest request;
     PS8 mask = (PS8) parm[1].value;
     PS8 pattern = (PS8) parm[2].value;
+
+    check_parms(parm, nParms);
 
     request.offset = (U8)parm[0].value;
     CuCmd_ParseMaskString(mask, request.mask, &request.maskLength);
@@ -1942,6 +2014,8 @@ VOID CuCmd_RemoveRxDataFilter(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     PS8 mask = (PS8) parm[1].value;
     PS8 pattern = (PS8) parm[2].value;
 
+    check_parms(parm, nParms);
+
     request.offset = (U8)parm[0].value;
     CuCmd_ParseMaskString(mask, request.mask, &request.maskLength);
     CuCmd_ParsePatternString(pattern, request.pattern, &request.patternLength);
@@ -1960,6 +2034,8 @@ VOID CuCmd_GetRxDataFiltersStatistics(THandle hCuCmd, ConParm_t parm[], U16 nPar
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32 UnmatchedPacketsCount;
     U32 MatchedPacketsCount[4];
+
+    check_parms(parm, nParms);
 
     if (OK != CuCommon_GetRxDataFiltersStatistics(pCuCmd->hCuCommon, &UnmatchedPacketsCount, MatchedPacketsCount)) return;
 
@@ -1996,6 +2072,8 @@ VOID CuCmd_ShowStatistics(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 #ifdef XCC_MODULE_INCLUDED
     U32 XCCNetEap;
 #endif
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetBuffer(pCuCmd->hCuCommon, CTRL_DATA_MAC_ADDRESS,
             Mac, sizeof(TMacAddr))) return;
@@ -2088,12 +2166,10 @@ VOID CuCmd_ShowTxStatistics(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     U32 AverageFWDelay;
     U32 AverageMacDelay;
 
-    if( nParms == 0 )
-    {
+    if( nParms == 0 ) {
         if(OK != CuCommon_GetTxStatistics(pCuCmd->hCuCommon, &txCounters, 0)) return;
     }
-    else
-    {
+    else {
         if(OK != CuCommon_GetTxStatistics(pCuCmd->hCuCommon, &txCounters, parm[0].value)) return;
     }
 
@@ -2188,6 +2264,8 @@ VOID CuCmd_ShowAdvancedParams(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     S32 FragTh;
     S32 RtsTh;
 
+    check_parms(parm, nParms);
+
     if (pCuCmd->hWpaCore == NULL)
     {
         if(OK != CuCommon_GetU32(pCuCmd->hCuCommon, RSN_EXT_AUTHENTICATION_MODE, &AuthMode)) return;
@@ -2227,7 +2305,6 @@ VOID CuCmd_ShowAdvancedParams(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     print_available_values(power_mode_val);
     os_error_printf(CU_MSG_INFO2, (PS8)"  Encryption type: ");
     print_available_values(encrypt_type);
-
 }
 
 
@@ -2236,15 +2313,14 @@ VOID Cucmd_ShowPowerConsumptionStats(THandle hCuCmd,ConParm_t parm[],U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     ACXPowerConsumptionTimeStat_t tStatistics;
 
-    os_memset( &tStatistics, 0, sizeof(ACXPowerConsumptionTimeStat_t) );
+    check_parms(parm, nParms);
 
-     if (OK != CuCommon_GetPowerConsumptionStat(pCuCmd->hCuCommon,&tStatistics))
-     {
+    os_memset( &tStatistics, 0, sizeof(ACXPowerConsumptionTimeStat_t) );
+    if (OK != CuCommon_GetPowerConsumptionStat(pCuCmd->hCuCommon,&tStatistics))
+    {
         os_error_printf(CU_MSG_ERROR, (PS8)"ERROR - Failed to read power consumption statistic!\n");
         return;
-     }
-
-
+    }
 
     os_error_printf(CU_MSG_INFO2, (PS8)"\nPower Consumption Statistics:\n");
     os_error_printf(CU_MSG_INFO2, (PS8)"-----------------------------\n");
@@ -2253,7 +2329,6 @@ VOID Cucmd_ShowPowerConsumptionStats(THandle hCuCmd,ConParm_t parm[],U16 nParms)
     os_error_printf(CU_MSG_INFO2, (PS8)"powerDownTimeCnt: 0x%x%x\n", tStatistics.powerDownTimeCnt_Hi,tStatistics.powerDownTimeCnt_Low);
     os_error_printf(CU_MSG_INFO2, (PS8)"ListenMode11BTimeCnt: 0x%x%x\n", tStatistics.ListenMode11BTimeCnt_Hi,tStatistics.ListenMode11BTimeCnt_Low);
     os_error_printf(CU_MSG_INFO2, (PS8)"ListenModeOFDMTimeCnt: 0x%x%x\n", tStatistics.ListenModeOFDMTimeCnt_Hi,tStatistics.ListenModeOFDMTimeCnt_Low);
-
 }
 
 
@@ -2261,6 +2336,8 @@ VOID Cucmd_ShowPowerConsumptionStats(THandle hCuCmd,ConParm_t parm[],U16 nParms)
 VOID CuCmd_ScanAppGlobalConfig(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if ( 0 == os_strcmp( (PS8)"<empty>", (PS8)parm[0].value) )
     {
@@ -2293,6 +2370,8 @@ VOID CuCmd_ScanAppChannelConfig(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     scan_normalChannelEntry_t* pChannelEntry =
         &(pCuCmd->appScanParams.channelEntry[ parm[0].value ].normalChannelEntry);
 
@@ -2314,6 +2393,9 @@ VOID CuCmd_ScanAppChannelConfig(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ScanAppClear(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     os_memset( &pCuCmd->appScanParams, 0, sizeof(scan_Params_t) );
     os_error_printf(CU_MSG_INFO2, (PS8)"Application scan parameters cleared.\n");
 }
@@ -2323,6 +2405,8 @@ VOID CuCmd_ScanAppDisplay(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     S32 i,j;
     scan_normalChannelEntry_t* pNormalChannel;
+
+    check_parms(parm, nParms);
 
     CU_CMD_FIND_NAME_ARRAY(j, rate2Str, pCuCmd->appScanParams.probeRequestRate);
     os_error_printf(CU_MSG_INFO2, (PS8)"Application Scan params:\n");
@@ -2360,6 +2444,8 @@ VOID CuCmd_StartScan(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_SetBuffer(pCuCmd->hCuCommon, TIWLN_802_11_START_APP_SCAN_SET,
         &pCuCmd->appScanParams, sizeof(scan_Params_t)))
     {
@@ -2370,7 +2456,7 @@ VOID CuCmd_StartScan(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 
     /*
      * In order to have ability to set the application scan we are using application scan priver command
-     * exsample for using supplicant scan command below:
+     * example for using supplicant scan command below:
      * #ifndef NO_WPA_SUPPL
      *       CuOs_Start_Scan(pCuCmd->hCuWext, &ssid);
      * #endif
@@ -2430,6 +2516,8 @@ VOID CuCmd_StopScan (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_SetBuffer(pCuCmd->hCuCommon, TIWLN_802_11_STOP_APP_SCAN_SET, NULL, 0))
     {
         return;
@@ -2440,6 +2528,8 @@ VOID CuCmd_StopScan (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ConfigPeriodicScanGlobal (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     pCuCmd->tPeriodicAppScanParams.iRssiThreshold = (S8)parm[ 0 ].value;
     pCuCmd->tPeriodicAppScanParams.iSnrThreshold = (S8)parm[ 1 ].value;
@@ -2457,12 +2547,17 @@ VOID CuCmd_ConfigPeriodicScanInterval (THandle hCuCmd, ConParm_t parm[], U16 nPa
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     pCuCmd->tPeriodicAppScanParams.uCycleIntervalMsec[ parm[ 0 ].value ] = parm[ 1 ].value;
 }
 
 VOID CuCmd_ConfigurePeriodicScanSsid (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     TSsid *pSsid = &pCuCmd->tPeriodicAppScanParams.tDesiredSsid[ parm[ 0 ].value ].tSsid;
 
     pCuCmd->tPeriodicAppScanParams.tDesiredSsid[ parm[ 0 ].value ].eVisability = parm[ 1 ].value;
@@ -2481,6 +2576,8 @@ VOID CuCmd_ConfigurePeriodicScanChannel (THandle hCuCmd, ConParm_t parm[], U16 n
     CuCmd_t                 *pCuCmd = (CuCmd_t*)hCuCmd;
     TPeriodicChannelEntry   *pChannelEnrty = &(pCuCmd->tPeriodicAppScanParams.tChannels[ parm[ 0 ].value ]);
 
+    check_parms(parm, nParms);
+
     pChannelEnrty->eBand = parm[ 1 ].value;
     pChannelEnrty->uChannel = parm[ 2 ].value;
     pChannelEnrty->eScanType = parm[ 3 ].value;
@@ -2493,6 +2590,8 @@ VOID CuCmd_ClearPeriodicScanConfiguration (THandle hCuCmd, ConParm_t parm[], U16
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     os_memset (&(pCuCmd->tPeriodicAppScanParams), 0, sizeof (TPeriodicScanParams));
     os_error_printf(CU_MSG_INFO2, (PS8)"Periodic application scan parameters cleared.\n");
 }
@@ -2501,6 +2600,8 @@ VOID CuCmd_DisplayPeriodicScanConfiguration (THandle hCuCmd, ConParm_t parm[], U
 {
     CuCmd_t*    pCuCmd = (CuCmd_t*)hCuCmd;
     S32         i, j, k;
+
+    check_parms(parm, nParms);
 
     os_error_printf(CU_MSG_INFO2, (PS8)"Application Periodic Scan parameters:\n");
     os_error_printf(CU_MSG_INFO2, (PS8)"RSSI Threshold: %d, SNR Threshold: %d, Report Threshold: %d  Number of cycles: %d\n",
@@ -2548,6 +2649,8 @@ VOID CuCmd_StartPeriodicScan (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_SetBuffer(pCuCmd->hCuCommon, SCAN_CNCN_START_PERIODIC_SCAN,
                                 &(pCuCmd->tPeriodicAppScanParams), sizeof(TPeriodicScanParams)))
     {
@@ -2559,6 +2662,8 @@ VOID CuCmd_StartPeriodicScan (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_StopPeriodicScan (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_SetBuffer(pCuCmd->hCuCommon, SCAN_CNCN_STOP_PERIODIC_SCAN,
                                 NULL, 0))
@@ -2572,6 +2677,8 @@ VOID CuCmd_ConfigScanPolicy(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     pCuCmd->scanPolicy.normalScanInterval =  parm[ 0 ].value;
     pCuCmd->scanPolicy.deterioratingScanInterval = parm[ 1 ].value;
     pCuCmd->scanPolicy.maxTrackFailures = (U8)(parm[ 2 ].value);
@@ -2583,6 +2690,9 @@ VOID CuCmd_ConfigScanPolicy(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ConfigScanBand(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     scan_bandPolicy_t* pBandPolicy = &(pCuCmd->scanPolicy.bandScanPolicy[ parm [ 0 ].value ]);
 
     pBandPolicy->band = parm[ 1 ].value;
@@ -2594,6 +2704,9 @@ VOID CuCmd_ConfigScanBand(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ConfigScanBandChannel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     scan_bandPolicy_t* pBandPolicy = &(pCuCmd->scanPolicy.bandScanPolicy[ parm [ 0 ].value ]);
 
     pBandPolicy->channelList[ parm[ 1 ].value ] = (U8)(parm[ 2 ].value);
@@ -2602,6 +2715,9 @@ VOID CuCmd_ConfigScanBandChannel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ConfigScanBandTrack(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     scan_bandPolicy_t* pBandPolicy = &(pCuCmd->scanPolicy.bandScanPolicy[ parm [ 0 ].value ]);
 
     if (parm[6].value < parm[7].value)
@@ -2659,6 +2775,9 @@ VOID CuCmd_ConfigScanBandTrack(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ConfigScanBandDiscover(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     scan_bandPolicy_t* pBandPolicy = &(pCuCmd->scanPolicy.bandScanPolicy[ parm [ 0 ].value ]);
 
     if (parm[6].value < parm[7].value)
@@ -2716,6 +2835,9 @@ VOID CuCmd_ConfigScanBandDiscover(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ConfigScanBandImmed(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     scan_bandPolicy_t* pBandPolicy = &(pCuCmd->scanPolicy.bandScanPolicy[ parm [ 0 ].value ]);
 
     if (parm[6].value < parm[7].value)
@@ -2775,6 +2897,8 @@ VOID CuCmd_DisplayScanPolicy(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     S32 i;
 
+    check_parms(parm, nParms);
+
     os_error_printf(CU_MSG_INFO2, (PS8)"Scan Policy:\n");
     os_error_printf(CU_MSG_INFO2, (PS8)"Normal scan interval: %d, deteriorating scan interval: %d\n",
           pCuCmd->scanPolicy.normalScanInterval, pCuCmd->scanPolicy.deterioratingScanInterval);
@@ -2792,6 +2916,8 @@ VOID CuCmd_ClearScanPolicy(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     os_memset( &pCuCmd->scanPolicy, 0, sizeof(scan_Policy_t) );
     os_error_printf(CU_MSG_INFO2, (PS8)"Scan policy cleared.\n");
 }
@@ -2799,6 +2925,8 @@ VOID CuCmd_ClearScanPolicy(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_SetScanPolicy(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_SetBuffer(pCuCmd->hCuCommon, TIWLN_802_11_SCAN_POLICY_PARAM_SET,
         &pCuCmd->scanPolicy, sizeof(scan_Policy_t))) return;
@@ -2810,6 +2938,8 @@ VOID CuCmd_GetScanBssList(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     bssList_t list;
     S32 i;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetSetBuffer(pCuCmd->hCuCommon, TIWLN_802_11_SCAN_BSS_LIST_GET,
         &list, sizeof(bssList_t))) return;
@@ -2833,6 +2963,8 @@ VOID CuCmd_RoamingEnable(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetBuffer(pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t))) return;
     roamingMngrConfigParams.roamingMngrConfig.enableDisable = ROAMING_ENABLED;
@@ -2844,6 +2976,9 @@ VOID CuCmd_RoamingEnable(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_RoamingDisable(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     roamingMngrConfigParams_t   roamingMngrConfigParams;
 
     if(OK != CuCommon_GetBuffer(pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
@@ -2857,6 +2992,9 @@ VOID CuCmd_RoamingDisable(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_RoamingLowPassFilter(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     roamingMngrConfigParams_t   roamingMngrConfigParams;
 
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
@@ -2876,6 +3014,8 @@ VOID CuCmd_RoamingQualityIndicator(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
     if( nParms != 0 )
@@ -2892,6 +3032,8 @@ VOID CuCmd_RoamingDataRetryThreshold(THandle hCuCmd, ConParm_t parm[], U16 nParm
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
@@ -2910,6 +3052,8 @@ VOID CuCmd_RoamingNumExpectedTbttForBSSLoss(THandle hCuCmd, ConParm_t parm[], U1
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
     if( nParms != 0 )
@@ -2926,6 +3070,8 @@ VOID CuCmd_RoamingTxRateThreshold(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
@@ -2945,6 +3091,8 @@ VOID CuCmd_RoamingLowRssiThreshold(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
     if( nParms != 0 )
@@ -2963,6 +3111,8 @@ VOID CuCmd_RoamingLowSnrThreshold(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
     if( nParms != 0 )
@@ -2978,6 +3128,8 @@ VOID CuCmd_RoamingLowQualityForBackgroungScanCondition(THandle hCuCmd, ConParm_t
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
@@ -2997,6 +3149,8 @@ VOID CuCmd_RoamingNormalQualityForBackgroungScanCondition(THandle hCuCmd, ConPar
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
     if( nParms != 0 )
@@ -3014,6 +3168,8 @@ VOID CuCmd_RoamingGetConfParams(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     roamingMngrConfigParams_t   roamingMngrConfigParams;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetBuffer (pCuCmd->hCuCommon, ROAMING_MNGR_APPLICATION_CONFIGURATION,
         &roamingMngrConfigParams, sizeof(roamingMngrConfigParams_t)) ) return;
@@ -3080,6 +3236,8 @@ VOID CuCmd_AddTspec(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_QOS_TSPEC_PARAMS TspecParams;
 
+    check_parms(parm, nParms);
+
     TspecParams.uUserPriority = parm[0].value;
     TspecParams.uNominalMSDUsize = parm[1].value;
     TspecParams.uMeanDataRate = parm[2].value;
@@ -3109,6 +3267,8 @@ VOID CuCmd_GetTspec(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_QOS_TSPEC_PARAMS TspecParams;
 
+    check_parms(parm, nParms);
+
     TspecParams.uUserPriority = parm[0].value;
 
     if(OK != CuCommon_GetSetBuffer(pCuCmd->hCuCommon, TIWLN_802_11_GET_TSPEC_PARAMS,
@@ -3131,6 +3291,8 @@ VOID CuCmd_DeleteTspec(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_QOS_DELETE_TSPEC_PARAMS TspecParams;
 
+    check_parms(parm, nParms);
+
     TspecParams.uUserPriority = parm[0].value;
     TspecParams.uReasonCode = parm[1].value;
 
@@ -3147,6 +3309,8 @@ VOID CuCmd_GetApQosParams(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_AC_QOS_PARAMS AcQosParams;
     S32 i = 0;
+
+    check_parms(parm, nParms);
 
     /* test if we can get the AC QOS Params */
     AcQosParams.uAC = i;
@@ -3188,6 +3352,8 @@ VOID CuCmd_GetPsRxStreamingParams(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     TPsRxStreaming tPsRxStreaming;
     S32 i = 0;
 
+    check_parms(parm, nParms);
+
     os_error_printf(CU_MSG_INFO2, (PS8)"PS Rx Streaming Parameters:\n");
     os_error_printf(CU_MSG_INFO2, (PS8)"+-----+--------------+------------+---------+\n");
     os_error_printf(CU_MSG_INFO2, (PS8)"| TID | StreamPeriod | uTxTimeout | Enabled |\n");
@@ -3211,8 +3377,9 @@ VOID CuCmd_GetPsRxStreamingParams(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_GetApQosCapabilities(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
-
     OS_802_11_AP_QOS_CAPABILITIES_PARAMS ApQosCapabiltiesParams;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetBuffer(pCuCmd->hCuCommon, TIWLN_802_11_GET_AP_QOS_CAPABILITIES,
         &ApQosCapabiltiesParams, sizeof(OS_802_11_AP_QOS_CAPABILITIES_PARAMS))) return;
@@ -3228,6 +3395,8 @@ VOID CuCmd_GetAcStatus(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_AC_UPSD_STATUS_PARAMS AcStatusParams;
 
+    check_parms(parm, nParms);
+
     AcStatusParams.uAC = parm[0].value;
 
     if(OK != CuCommon_GetSetBuffer(pCuCmd->hCuCommon, TIWLN_802_11_GET_CURRENT_AC_STATUS,
@@ -3242,6 +3411,8 @@ VOID CuCmd_ModifyMediumUsageTh(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_THRESHOLD_CROSS_PARAMS ThCrossParams;
+
+    check_parms(parm, nParms);
 
     if (nParms == 3) /* If user supplied 3 parameters - this is a SET operation */
     {
@@ -3284,6 +3455,8 @@ VOID CuCmd_GetDesiredPsMode(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_QOS_DESIRED_PS_MODE DesiredPsMode;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetBuffer(pCuCmd->hCuCommon, TIWLN_802_11_GET_DESIRED_PS_MODE,
         &DesiredPsMode, sizeof(OS_802_11_QOS_DESIRED_PS_MODE))) return;
@@ -3431,6 +3604,8 @@ VOID CuCmd_SetPsRxDelivery(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TPsRxStreaming tPsRxStreaming;
 
+    check_parms(parm, nParms);
+
     tPsRxStreaming.uTid          = parm[0].value;
     tPsRxStreaming.uStreamPeriod = parm[1].value;
     tPsRxStreaming.uTxTimeout    = parm[2].value;
@@ -3459,6 +3634,8 @@ VOID CuCmd_SetQosParams(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_QOS_PARAMS QosParams;
 
+    check_parms(parm, nParms);
+
     QosParams.acID=parm[0].value;
     QosParams.MaxLifeTime=parm[1].value;
     QosParams.PSDeliveryProtocol = parm[2].value;
@@ -3481,6 +3658,8 @@ VOID CuCmd_SetRxTimeOut(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_QOS_RX_TIMEOUT_PARAMS rxTimeOut;
+
+    check_parms(parm, nParms);
 
     rxTimeOut.psPoll = parm[0].value;
     rxTimeOut.UPSD   = parm[1].value;
@@ -3681,6 +3860,8 @@ VOID CuCmd_GetBtCoeStatus(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32 uDummyBuf;
+
+    check_parms(parm, nParms);
 
     if(OK != CuCommon_GetBuffer(pCuCmd->hCuCommon, SOFT_GEMINI_GET_CONFIG,
             &uDummyBuf, sizeof(U32)))
@@ -3911,6 +4092,9 @@ VOID CuCmd_SetTrafficIntensityTh(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_EnableTrafficEvents(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_SetU32(pCuCmd->hCuCommon, TIWLN_802_11_TOGGLE_TRAFFIC_INTENSITY_EVENTS, TRUE) ) return;
     os_error_printf(CU_MSG_INFO2, (PS8)"Traffic intensity thresholds enabled...\n");
 }
@@ -3918,6 +4102,9 @@ VOID CuCmd_EnableTrafficEvents(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_DisableTrafficEvents(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_SetU32(pCuCmd->hCuCommon, TIWLN_802_11_TOGGLE_TRAFFIC_INTENSITY_EVENTS, FALSE) ) return;
     os_error_printf(CU_MSG_INFO2, (PS8)"Traffic intensity thresholds disabled...\n");
 }
@@ -3996,7 +4183,7 @@ VOID CuCmd_LogReportSeverityLevel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
             os_error_printf(CU_MSG_INFO2, (PS8)"-------------------------------\n");
             os_error_printf(CU_MSG_INFO2, (PS8)"%14s\tState\t%s\n", (PS8)"Severity level", (PS8)"Desc");
 
-            for( i=1; i<SIZE_ARR(report_severity); i++ )
+            for( i=1; i < (S32)SIZE_ARR(report_severity); i++ )
             {
                 os_error_printf(CU_MSG_INFO2, (PS8)"%d\t%c\t%s\n", report_severity[i].value, (SeverityTable[i] == '1') ? '+' : ' ', report_severity[i].name );
             }
@@ -4041,7 +4228,7 @@ VOID CuCmd_SetReport(THandle hCuCmd, ConParm_t parm[], U16 nParms)
             os_error_printf(CU_MSG_INFO2, (PS8)"-------------------------------\n");
             os_error_printf(CU_MSG_INFO2, (PS8)"%.5s\tState\t %s\n", (PS8)"Index", (PS8)"Desc");
 
-            for( i = 0; i < SIZE_ARR(report_module); i++)
+            for( i = 0; i < (S32) SIZE_ARR(report_module); i++)
             {
                 /* Check if there is string content (the first character is not ZERO) */
                 if( report_module[i].name[0] )
@@ -4078,7 +4265,7 @@ VOID CuCmd_AddReport(THandle hCuCmd, ConParm_t parm[], U16 nParms)
             os_error_printf(CU_MSG_INFO2, (PS8)"-------------------------------\n");
             os_error_printf(CU_MSG_INFO2, (PS8)"%.5s\tState\t %s\n", (PS8)"Index", (PS8)"Desc");
 
-            for( i = 0; i < SIZE_ARR(report_module); i++)
+            for( i = 0; i < (S32) SIZE_ARR(report_module); i++)
             {
                 /* Check if there is string content (the first character is not ZERO) */
                 if( report_module[i].name[0] )
@@ -4120,7 +4307,7 @@ VOID CuCmd_ClearReport(THandle hCuCmd, ConParm_t parm[], U16 nParms)
             os_error_printf(CU_MSG_INFO2, (PS8)"-------------------------------\n");
             os_error_printf(CU_MSG_INFO2, (PS8)"%.5s\tState\t %s\n", (PS8)"Index", (PS8)"Desc");
 
-            for( i = 0; i < SIZE_ARR(report_module); i++)
+            for( i = 0; i < (S32) SIZE_ARR(report_module); i++)
             {
                 /* Check if there is string content (the first character is not ZERO) */
                 if( report_module[i].name[0] )
@@ -4165,7 +4352,7 @@ VOID CuCmd_ReportSeverityLevel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
             os_error_printf(CU_MSG_INFO2, (PS8)"-------------------------------\n");
             os_error_printf(CU_MSG_INFO2, (PS8)"%14s\tState\t%s\n", (PS8)"Severity level", (PS8)"Desc");
 
-            for( i=1; i<SIZE_ARR(report_severity); i++ )
+            for( i=1; i<(S32) SIZE_ARR(report_severity); i++ )
             {
                 os_error_printf(CU_MSG_INFO2, (PS8)"%d\t%c\t%s\n", report_severity[i].value, (SeverityTable[i] == '1') ? '+' : ' ', report_severity[i].name );
             }
@@ -4216,6 +4403,9 @@ VOID CuCmd_ReportSeverityLevel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 
 VOID CuCmd_SetReportLevelCLI(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
+    if (hCuCmd==NULL) return;
+    check_parms(parm, nParms);
+
 #if 0 /* need to create debug logic for CLI */
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     S32 i, cli_debug_level;
@@ -4225,7 +4415,7 @@ VOID CuCmd_SetReportLevelCLI(THandle hCuCmd, ConParm_t parm[], U16 nParms)
         cli_debug_level = parm[0].value;
         /* check if the param is valid */
         CU_CMD_FIND_NAME_ARRAY(i, cli_level_type, cli_debug_level);
-        if(i == SIZE_ARR(cli_level_type))
+        if(i == (S32) SIZE_ARR(cli_level_type))
         {
             os_error_printf(CU_MSG_INFO2, (PS8)"CuCmd_SetReportLevelCLI, cli_debug_level %d is not defined!\n", cli_debug_level);
             return;
@@ -4302,6 +4492,8 @@ VOID CuCmd_FwDebug(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     U32 *buf_ptr, *pbuf;
     char *pstr = (char *)parm[0].value;
     U32 parm_length;
+
+    check_parms(parm, nParms);
 
     os_error_printf(CU_MSG_INFO2, (PS8)"FwDebug parm: %s\n", parm[0].value);
 
@@ -4756,6 +4948,8 @@ VOID CuCmd_RadioDebug_StopTx(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
 
+    check_parms(parm, nParms);
+
     os_memset(&data, 0, sizeof(TTestCmd));
     data.testCmdId = TEST_CMD_STOP_TX;
 
@@ -4773,6 +4967,8 @@ VOID CuCmd_RadioDebug_Template(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
+
+    check_parms(parm, nParms);
 
     if ((nParms == 0) || (nParms > 3))
     {
@@ -4812,6 +5008,8 @@ VOID CuCmd_RadioDebug_StartRxStatistics(THandle hCuCmd, ConParm_t parm[], U16 nP
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
 
+    check_parms(parm, nParms);
+
     os_memset(&data, 0, sizeof(TTestCmd));
     data.testCmdId = TEST_CMD_RX_STAT_START;
 
@@ -4828,6 +5026,8 @@ VOID CuCmd_RadioDebug_StopRxStatistics(THandle hCuCmd, ConParm_t parm[], U16 nPa
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
+
+    check_parms(parm, nParms);
 
     os_memset(&data, 0, sizeof(TTestCmd));
     data.testCmdId = TEST_CMD_RX_STAT_STOP;
@@ -4846,6 +5046,8 @@ VOID CuCmd_RadioDebug_ResetRxStatistics(THandle hCuCmd, ConParm_t parm[], U16 nP
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
 
+    check_parms(parm, nParms);
+
     os_memset(&data, 0, sizeof(TTestCmd));
     data.testCmdId = TEST_CMD_RX_STAT_RESET;
 
@@ -4863,6 +5065,8 @@ VOID CuCmd_RadioDebug_GetHDKVersion(THandle hCuCmd, ConParm_t parm[], U16 nParms
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
+
+    check_parms(parm, nParms);
 
     os_memset(&data, 0, sizeof(TTestCmd));
 
@@ -4895,6 +5099,8 @@ VOID CuCmd_RadioDebug_GetRxStatistics(THandle hCuCmd, ConParm_t parm[], U16 nPar
 
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
+
+    check_parms(parm, nParms);
 
     os_memset(&data, 0, sizeof(TTestCmd));
     data.testCmdId = TEST_CMD_RX_STAT_GET;
@@ -4943,13 +5149,10 @@ void nvsFillMACAddress(THandle hCuCmd, FILE *nvsBinFile)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TMacAddr Mac;
-    U8  lengthToSet;
+    U8  lengthToSet = 0x1;
     U8  addressHigher;
     U8  addressLower;
     U8  valueToSet=0;
-
-    lengthToSet = 0x1;
-
 
     os_error_printf(CU_MSG_INFO2, (PS8)"Entering FillMACAddressToNVS\n");
     /* param 0 in nvs*/
@@ -5441,6 +5644,8 @@ VOID nvsUpdateFile(THandle hCuCmd, TNvsStruct nvsStruct, TI_UINT8 version,  S8 u
 
 VOID CuCmd_BIP_BufferCalReferencePoint(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
+    check_parms(parm, nParms);
+
 #define NUM_OF_PARAMETERS_REF_POINT 3
 
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
@@ -5484,6 +5689,8 @@ VOID CuCmd_BIP_StartBIP(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     TTestCmd data;
     U32 i;
 
+    check_parms(parm, nParms);
+
     os_memset(&data, 0, sizeof(TTestCmd));
 
     data.testCmdId = TEST_CMD_P2G_CAL;
@@ -5520,6 +5727,8 @@ VOID CuCmd_BIP_EnterRxBIP(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
 
+    check_parms(parm, nParms);
+
     os_memset(&data, 0, sizeof(TTestCmd));
 
     data.testCmdId = TEST_CMD_RX_PLT_ENTER;
@@ -5543,6 +5752,8 @@ VOID CuCmd_BIP_StartRxBIP(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
+
+    check_parms(parm, nParms);
 
     os_memset(&data, 0, sizeof(TTestCmd));
 
@@ -5568,6 +5779,8 @@ VOID CuCmd_BIP_ExitRxBIP(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TTestCmd data;
 
+    check_parms(parm, nParms);
+
     os_memset(&data, 0, sizeof(TTestCmd));
 
     data.testCmdId = TEST_CMD_RX_PLT_EXIT;
@@ -5592,6 +5805,8 @@ VOID CuCmd_SetPrivacyAuth(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32 AuthMode;
+
+    check_parms(parm, nParms);
 
     if( nParms )
     {
@@ -5684,7 +5899,7 @@ VOID CuCmd_SetPrivacyEap(THandle hCuCmd, ConParm_t parm[], U16 nParms)
         EapType = parm[0].value;
         /* check if the param is valid */
         CU_CMD_FIND_NAME_ARRAY(i, EapType_type, EapType);
-        if(i == SIZE_ARR(EapType_type))
+        if(i == (S32) SIZE_ARR(EapType_type))
         {
             os_error_printf(CU_MSG_INFO2, (PS8)"CuCmd_SetPrivacyEap, EapType %d is not defined!\n", EapType);
             return;
@@ -5717,8 +5932,8 @@ VOID CuCmd_SetPrivacyEncryption(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32 EncryptionType;
 #ifndef NO_WPA_SUPPL
-    OS_802_11_ENCRYPTION_TYPES EncryptionTypePairWise;
-    OS_802_11_ENCRYPTION_TYPES EncryptionTypeGroup;
+    OS_802_11_ENCRYPTION_TYPES EncryptionTypePairWise = OS_ENCRYPTION_TYPE_NONE;
+    OS_802_11_ENCRYPTION_TYPES EncryptionTypeGroup = OS_ENCRYPTION_TYPE_NONE;
 #endif
     S32 i;
 
@@ -5728,7 +5943,7 @@ VOID CuCmd_SetPrivacyEncryption(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 
         /* check if the param is valid */
         CU_CMD_FIND_NAME_ARRAY(i, encrypt_type, EncryptionType);
-        if(i == SIZE_ARR(encrypt_type))
+        if(i == (S32) SIZE_ARR(encrypt_type))
         {
             os_error_printf(CU_MSG_INFO2, (PS8)"CuCmd_SetPrivacyEncryption, EncryptionType %d is not defined!\n", EncryptionType);
             return;
@@ -5853,7 +6068,7 @@ VOID CuCmd_SetPrivacyKeyType(THandle hCuCmd, ConParm_t parm[], U16 nParms)
         KeyType = parm[0].value;
         /* check if the param is valid */
         CU_CMD_FIND_NAME_ARRAY(i, KeyType_type, KeyType);
-        if(i == SIZE_ARR(KeyType_type))
+        if(i == (S32) SIZE_ARR(KeyType_type))
         {
             os_error_printf(CU_MSG_INFO2, (PS8)"CuCmd_SetPrivacyKeyType - KeyType %d is not defined!\n", KeyType);
             return;
@@ -6015,26 +6230,28 @@ VOID CuCmd_SetPrivacyPskPassPhrase(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 
 VOID CuCmd_SetPrivacyCertificate(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
-  CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+    CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
-   if( nParms == 0 )
+    check_parms(parm, nParms);
+
+    if( nParms == 0 )
         return;
 
-   if (pCuCmd->hWpaCore == NULL)
-   {
+    if (pCuCmd->hWpaCore == NULL)
+    {
        os_error_printf(CU_MSG_ERROR, (PS8)"Error - CuCmd_SetPrivacyPskPassPhrase - cannot set Certification  when Suppl is not present\n");
        return;
-   }
+    }
 #ifndef NO_WPA_SUPPL
-   WpaCore_SetCertificate(pCuCmd->hWpaCore,(PU8)(parm[0].value));
+    WpaCore_SetCertificate(pCuCmd->hWpaCore,(PU8)(parm[0].value));
 #endif
-
-
 }
 
 VOID CuCmd_StopSuppl(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     /* check if we have supplicant */
     if (pCuCmd->hWpaCore == NULL)
@@ -6050,6 +6267,8 @@ VOID CuCmd_StopSuppl(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ChangeSupplDebugLevels(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     /* check if we have supplicant */
     if (pCuCmd->hWpaCore == NULL)
@@ -6072,6 +6291,8 @@ VOID CuCmd_AddPrivacyKey(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     OS_802_11_WEP data;
     U8 val_l, val_u;
     S32 len;
+
+    check_parms(parm, nParms);
 
     buf =  (PS8)parm[0].value;
     key_id = (U32)parm[1].value;
@@ -6163,6 +6384,8 @@ VOID CuCmd_RemovePrivacyKey(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     /* check if we have supplicant */
     CuCommon_RemoveKey(pCuCmd->hCuCommon, parm[0].value);
 }
@@ -6171,6 +6394,8 @@ VOID CuCmd_GetPrivacyDefaultKey(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     U32 DefaultKeyId;
+
+    check_parms(parm, nParms);
 
     /* check if we have supplicant */
     if (pCuCmd->hWpaCore == NULL)
@@ -6191,6 +6416,8 @@ VOID CuCmd_EnableKeepAlive (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     if (OK != CuCommon_SetU32 (pCuCmd->hCuCommon, POWER_MGR_KEEP_ALIVE_ENA_DIS, 1))
     {
         os_error_printf (CU_MSG_ERROR, (PS8)"Unable to enable keep-alive messages\n");
@@ -6200,6 +6427,8 @@ VOID CuCmd_EnableKeepAlive (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_DisableKeepAlive (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if (OK != CuCommon_SetU32 (pCuCmd->hCuCommon, POWER_MGR_KEEP_ALIVE_ENA_DIS, 0))
     {
@@ -6211,6 +6440,8 @@ VOID CuCmd_AddKeepAliveMessage (THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t                 *pCuCmd = (CuCmd_t*)hCuCmd;
     TKeepAliveTemplate      keepAliveParams;
+
+    check_parms(parm, nParms);
 
     if (4 != nParms)
     {
@@ -6247,6 +6478,8 @@ VOID CuCmd_RemoveKeepAliveMessage (THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t                 *pCuCmd = (CuCmd_t*)hCuCmd;
     TKeepAliveTemplate      keepAliveParams;
 
+    check_parms(parm, nParms);
+
     if (1 != nParms)
     {
         os_error_printf (CU_MSG_ERROR, (PS8)"Number of params to remove keep-alive message is %d\n", nParms);
@@ -6272,6 +6505,8 @@ VOID CuCmd_ShowKeepAlive (THandle hCuCmd, ConParm_t parm[], U16 nParms)
     TKeepAliveConfig        tConfig;
     U32                     uIndex, uNameIndex;
     S8                      msgBuffer[ KEEP_ALIVE_TEMPLATE_MAX_LENGTH * 2 ];
+
+    check_parms(parm, nParms);
 
     if (OK != CuCommon_GetSetBuffer (pCuCmd->hCuCommon, POWER_MGR_KEEP_ALIVE_GET_CONFIG,
                                      &(tConfig), sizeof(TKeepAliveConfig)))
@@ -6321,6 +6556,8 @@ VOID CuCmd_SetArpIPFilter (THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t     *pCuCmd = (CuCmd_t*)hCuCmd;
     TI_UINT8    length = 4;
 
+    check_parms(parm, nParms);
+
     if (length != nParms)
     {
         os_error_printf (CU_MSG_ERROR, (PS8)"Error! IP format requires 4 parameters as follows: <Part1> <Part2> <Part3> <Part4>  \n");
@@ -6346,6 +6583,8 @@ VOID CuCmd_ShowAbout(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     S8 FwVesrion[FW_VERSION_LEN];
 
+    check_parms(parm, nParms);
+
     if(OK != CuCommon_GetBuffer(pCuCmd->hCuCommon, SITE_MGR_FIRMWARE_VERSION_PARAM,
         FwVesrion, FW_VERSION_LEN)) return;
 
@@ -6368,14 +6607,17 @@ VOID CuCmd_Quit(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
 
+    check_parms(parm, nParms);
+
     Console_Stop(pCuCmd->hConsole);
 }
 
 VOID CuCmd_ApRoleDbgBssStart(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
-
     TI_UINT8 bssIdx;
+
+    check_parms(parm, nParms);
 
     if (nParms != 1)
     {
@@ -6392,6 +6634,8 @@ VOID CuCmd_ApRoleDbgBssStop(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TI_UINT8 bssIdx;
+
+    check_parms(parm, nParms);
 
     if (nParms != 1)
     {
@@ -6410,6 +6654,7 @@ VOID CuCmd_ApRoleSetSSIDType(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     SsidType_enum ssidType;
 
+    check_parms(parm, nParms);
 
     if (nParms != 1)
     {
@@ -6429,6 +6674,8 @@ VOID CuCmd_ApRoleSetChannel(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TI_UINT8 channel;
 
+    check_parms(parm, nParms);
+
     if (nParms != 1)
     {
         os_error_printf(CU_MSG_INFO2, (PS8)"Param 0 - 2.4GHz channel (1,2,..14)\n");
@@ -6446,6 +6693,8 @@ VOID CuCmd_ApRoleSetBeconInterval(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TI_UINT16 interval;
 
+    check_parms(parm, nParms);
+
     if (nParms != 1)
     {
         os_error_printf(CU_MSG_INFO2, (PS8)"Param 0 - Beacon Interval \n");
@@ -6461,6 +6710,8 @@ VOID CuCmd_ApRoleSetDTIMInterval(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     TI_UINT16 interval;
+
+    check_parms(parm, nParms);
 
     if (nParms != 1)
     {
@@ -6478,6 +6729,7 @@ VOID CuCmd_ApRoleSetSSID(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
     OS_802_11_SSID ssid;
 
+    check_parms(parm, nParms);
 
     if (nParms != 1 || (os_strlen((PS8)parm[0].value) > 32))
     {
@@ -6497,22 +6749,29 @@ VOID CuCmd_ApRoleSetSSID(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 
 VOID CuCmd_ApRoleSaveChanges(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
+    if (hCuCmd==NULL) return;
+    check_parms(parm, nParms);
+
     CuHostapd_SaveChanges();
 }
 
 VOID CuCmd_ApRoleShowStatus(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
+    if (hCuCmd==NULL) return;
+    check_parms(parm, nParms);
+
     CuHostapd_ShowStatus();
 }
 
 
 VOID CuCmd_ApRoleUpdateKeyInConfFile(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
-    CuCmd_t*        pCuCmd = (CuCmd_t*)hCuCmd;
     TKeyValuePair   keyValPair;
-    EHostapdParams  eParam;
     TI_UINT8        i;
     TI_UINT32       j,uKeyLength, uKeyIdx, valueLength;
+
+    if (hCuCmd==NULL) return;
+    check_parms(parm, nParms);
 
     if (nParms == 0)
     {
@@ -6553,6 +6812,9 @@ VOID CuCmd_ApRoleUpdateKeyInConfFile(THandle hCuCmd, ConParm_t parm[], U16 nParm
 VOID CuCmd_ApRoleSendCmdToHostapd(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     THostapdCLICmd cmd;
+
+    if (hCuCmd==NULL) return;
+    check_parms(parm, nParms);
 
 #ifndef TI_HOSTAPD_CLI_LIB
     os_error_printf(CU_MSG_INFO2, (PS8)"Hostapd commands are not available for this CLI version!! \n");
@@ -6600,7 +6862,7 @@ VOID CuCmd_ApRoleSendCmdToHostapd(THandle hCuCmd, ConParm_t parm[], U16 nParms)
             return;
         }
 #ifdef TI_HOSTAPD_CLI_LIB
-        HostapdCLI_RunCommand("tiap0", &cmd);
+        HostapdCLI_RunCommand(TI_INTF_NAME, &cmd);
 #endif
     }
 }
@@ -6609,9 +6871,12 @@ VOID CuCmd_SendResetCmdToHostapd(THandle hCuCmd,  ConParm_t parm[], U16 nParms)
 {
     THostapdCLICmd cmd;
 
+    if (hCuCmd==NULL) return;
+    check_parms(parm, nParms);
+
     cmd.eCmdType = HOSTAPD_CLI_CMD_RESET;
 #ifdef TI_HOSTAPD_CLI_LIB
-    HostapdCLI_RunCommand("tiap0", &cmd);
+    HostapdCLI_RunCommand(TI_INTF_NAME, &cmd);
 #endif
 }
 
@@ -6619,15 +6884,22 @@ VOID CuCmd_SendStopCmdToHostapd(THandle hCuCmd,  ConParm_t parm[], U16 nParms)
 {
     THostapdCLICmd cmd;
 
+    if (hCuCmd==NULL) return;
+    check_parms(parm, nParms);
+
     cmd.eCmdType = HOSTAPD_CLI_CMD_STOP;
 #ifdef TI_HOSTAPD_CLI_LIB
-    HostapdCLI_RunCommand("tiap0", &cmd);
+    HostapdCLI_RunCommand(TI_INTF_NAME, &cmd);
 #endif
 }
 
 VOID CuCmd_SendStartCmdToHostapd(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     THostapdCLICmd cmd;
+    PS8 pChar;
+
+    if (hCuCmd==NULL) return;
+    check_parms(parm, nParms);
 
     if (nParms != 1)
     {
@@ -6636,9 +6908,10 @@ VOID CuCmd_SendStartCmdToHostapd(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     }
 
     cmd.eCmdType = HOSTAPD_CLI_CMD_START;
-    os_memcpy((PVOID)cmd.u.tCmdStart.config_fname, parm[0].value, os_strlen(parm[0].value));
+    pChar = (PS8) parm[0].value;
+    os_memcpy((PS8)cmd.u.tCmdStart.config_fname, pChar, os_strlen(pChar));
 #ifdef TI_HOSTAPD_CLI_LIB
-    HostapdCLI_RunCommand("tiap0", &cmd);
+    HostapdCLI_RunCommand(TI_INTF_NAME, &cmd);
 #endif
 }
 
@@ -6649,24 +6922,21 @@ VOID CuCmd_SetGenericCmdToFW(THandle hCuCmd, ConParm_t parm[], U16 nParms)
     TI_UINT8  *pChar;
     roleAP_genericCmd_t tGenericCmd;
 
+    check_parms(parm, nParms);
 
     if (nParms != 2)
     {
         os_error_printf(CU_MSG_INFO2, (PS8)"Param 0 - CmdID (in decimal), Param1 - Row buffer in Hex  (i.e. f5 or 0b) \n");
         return;
     }
-
     if (os_strlen((PS8)parm[1].value) % 2)
     {
         os_error_printf(CU_MSG_INFO2, (PS8)"Error, Row buffer length must be Even!! \n");
         return;
     }
-
-    pChar = parm[1].value;
-
+    pChar = (TI_UINT8*) parm[1].value;
     tGenericCmd.uCmdID = (TI_UINT16)parm[0].value;
     tGenericCmd.len = (TI_UINT8)os_strlen((PS8)parm[1].value)/2;
-
 
     for (i=0 ; i< tGenericCmd.len ; i++)
     {
@@ -6691,12 +6961,10 @@ VOID CuCmd_SetGenericCmdToFW(THandle hCuCmd, ConParm_t parm[], U16 nParms)
             {
                 os_error_printf(CU_MSG_INFO2, (PS8)"\nERROR, INVALID HEX VALUE FOUND!!\n",i, *pChar);
             }
-
             tGenericCmd.buffer[i] |= (j == 0)?(tmp << 4):(tmp);
             pChar++;
         }
     }
-
     CuCommon_SetBuffer(pCuCmd->hCuCommon, ROLE_AP_SET_GENERIC_CMD_TO_FW_PARAM, (PVOID)&tGenericCmd, sizeof(tGenericCmd));
 
     return;
@@ -6705,6 +6973,8 @@ VOID CuCmd_SetGenericCmdToFW(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 VOID CuCmd_ApRolePrintDb(THandle hCuCmd, ConParm_t parm[], U16 nParms)
 {
     CuCmd_t* pCuCmd = (CuCmd_t*)hCuCmd;
+
+    check_parms(parm, nParms);
 
     if (nParms != 0)
     {
