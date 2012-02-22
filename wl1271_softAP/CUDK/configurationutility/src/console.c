@@ -2,29 +2,29 @@
  * console.c
  *
  * Copyright 2001-2010 Texas Instruments, Inc. - http://www.ti.com/
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and  
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
 /****************************************************************************
 *
 *   MODULE:  console.c
-*   
-*   PURPOSE: 
-* 
-*   DESCRIPTION:  
+*
+*   PURPOSE:
+*
+*   DESCRIPTION:
 *   ============
-*      
+*
 *
 ****************************************************************************/
 
@@ -53,9 +53,9 @@
 /* local types */
 /***************/
 
-typedef enum 
-{ 
-    Dir, 
+typedef enum
+{
+    Dir,
     Token
 } ConEntry_type_t;
 
@@ -81,8 +81,8 @@ typedef struct ConEntry_t
     S8                  help[MAX_HELP_LEN+1];    /* Help string */
     PS8                 alias;                  /* Alias - always in upper case*/
     ConEntry_type_t     sel;                   /* Entry selector */
-    
-    union 
+
+    union
     {
         struct
         {
@@ -105,7 +105,7 @@ typedef struct Console_t
     THandle hCuCmd;
 
     S32 isDeviceOpen;
-    
+
     ConEntry_t *p_mon_root;
     ConEntry_t *p_cur_dir;
     PS8         p_inbuf;
@@ -128,7 +128,7 @@ static PS8 Console_ltrim(PS8 s)
     return s;
 }
 
-/* 
+/*
 Make a preliminary analizis of <name> token.
 Returns a token type (Empty, Up, Root, Break, Name)
 */
@@ -136,40 +136,40 @@ static TokenType_t Console_analizeToken( PS8 name )
 {
     if (!name[0])
         return EmptyToken;
-    
+
     if (!os_strcmp(name, (PS8)TOKEN_UP ) )
         return UpToken;
-    
+
     if (!os_strcmp(name, (PS8)TOKEN_ROOT ) )
         return RootToken;
-    
+
     if (!os_strcmp(name, (PS8)TOKEN_BREAK ) )
         return BreakToken;
-    
+
     if (!os_strcmp(name, (PS8)TOKEN_HELP ) )
         return HelpToken;
-    
+
     if (!os_strcmp(name, (PS8)TOKEN_DIRHELP ) )
         return DirHelpToken;
-    
+
     if (!os_strcmp(name, (PS8)TOKEN_QUIT ) )
         return QuitToken;
 
     return NameToken;
-    
+
 }
 
 /* Compare strings case insensitive */
 static S32 Console_stricmp( PS8 s1, PS8 s2, U16 len )
 {
     S32  i;
-    
+
     for( i=0; i<len && s1[i] && s2[i]; i++ )
     {
         if (os_tolower(s1[i])  != os_tolower(s2[i] ))
             break;
     }
-    
+
     return ( (len - i) * (s1[i] - s2[i]) );
 }
 
@@ -177,21 +177,21 @@ static S32 Console_stricmp( PS8 s1, PS8 s2, U16 len )
 static PS8 Console_strlwr( PS8 s )
 {
     PS8 s0=s;
-    
+
     while( *s )
     {
         *s = (S8)os_tolower(*s );
         ++s;
     }
-    
+
     return s0;
 }
 
 /* free the entries tree */
 static VOID Console_FreeEntry(ConEntry_t *pEntry)
-{   
+{
     ConEntry_t *pEntryTemp,*pEntryTemp1;
-    
+
     if(pEntry->sel == Dir)
     {
         pEntryTemp = pEntry->u.dir.first;
@@ -211,7 +211,7 @@ static VOID Console_FreeEntry(ConEntry_t *pEntry)
 
 /* Allocate root directory */
 static VOID Console_allocRoot(Console_t* pConsole)
-{   
+{
     /* The very first call. Allocate root structure */
     if ((pConsole->p_mon_root=(ConEntry_t *)os_MemoryCAlloc(sizeof( ConEntry_t ), 1) ) == NULL)
     {
@@ -247,30 +247,30 @@ static VOID Console_displayDir(Console_t* pConsole)
         if (p_token)
             os_strcat((PS8)out_buf, (PS8)(", ") );
     }
-    
-    os_error_printf(CU_MSG_INFO2, (PS8)("%s\n"), (PS8)out_buf );   
+
+    os_error_printf(CU_MSG_INFO2, (PS8)("%s\n"), (PS8)out_buf );
 }
 
 
-/* 
+/*
 Cut the first U16 from <p_inbuf>.
 Return the U16 in <name> and updated <p_inbuf>
 */
 static TokenType_t Console_getWord(Console_t* pConsole, PS8 name, U16 len )
 {
     U16         i=0;
-    TokenType_t tType;  
-    
+    TokenType_t tType;
+
     pConsole->p_inbuf = Console_ltrim(pConsole->p_inbuf);
-    
+
     while( *pConsole->p_inbuf && *pConsole->p_inbuf!=' ' && i<len )
-        name[i++] = *(pConsole->p_inbuf++);     
-    
+        name[i++] = *(pConsole->p_inbuf++);
+
     if (i<len)
         name[i] = 0;
-    
+
     tType   = Console_analizeToken( name );
-    
+
     return tType;
 }
 
@@ -279,9 +279,9 @@ static TokenType_t Console_getStrParam(Console_t* pConsole, PS8 buf, ConParm_t *
     TokenType_t tType;
     U32         i, len = param->hi_val;
     PS8         end_buf;
-    
+
     pConsole->p_inbuf = Console_ltrim(pConsole->p_inbuf);
-    
+
     if( param->flags & CON_PARM_LINE )
     {
         os_strcpy(buf, (PS8)pConsole->p_inbuf );
@@ -312,7 +312,7 @@ static TokenType_t Console_getStrParam(Console_t* pConsole, PS8 buf, ConParm_t *
         {
             for( i=0; *pConsole->p_inbuf && *pConsole->p_inbuf!=' ' && i<len; i++ )
                 buf[i] = *(pConsole->p_inbuf++);
-            
+
             buf[i] = 0;
             if( *pConsole->p_inbuf && *pConsole->p_inbuf != ' ' )
             {
@@ -322,9 +322,9 @@ static TokenType_t Console_getStrParam(Console_t* pConsole, PS8 buf, ConParm_t *
             }
         }
     }
-    
+
     tType   = Console_analizeToken( buf );
-    
+
     return tType;
 }
 
@@ -358,7 +358,7 @@ static S32 Console_parseParms(Console_t* pConsole, ConEntry_t *p_token, U16 *pnP
     U16 i, print_params = 0;
     U32 val = 0;
     S32 sval = 0;
-    
+
     /* Mark all parameters as don't having an explicit value */
     for( i=0; i<nTotalParms; i++ )
         p_token->u.token.parm[i].flags |= CON_PARM_NOVAL;
@@ -385,7 +385,7 @@ static S32 Console_parseParms(Console_t* pConsole, ConEntry_t *p_token, U16 *pnP
             {
                 os_error_printf(CU_MSG_ERROR, (PS8)("ERROR - param '%s' must be %ld..%ld chars\n"), (PS8)p_token->u.token.parm[i].name,
                     (PS8)p_token->u.token.parm[i].low_val, (PS8)p_token->u.token.parm[i].hi_val);
-                return FALSE;               
+                return FALSE;
             }
             os_strcpy((PS8)(char *)p_token->u.token.parm[i].value, (PS8)parm);
         }
@@ -393,7 +393,7 @@ static S32 Console_parseParms(Console_t* pConsole, ConEntry_t *p_token, U16 *pnP
         {
             if (Console_getWord(pConsole, parm, MAX_PARM_LEN ) != NameToken)
                 break;
-            
+
             if (p_token->u.token.parm[i].flags & CON_PARM_SIGN)
             {
                 sval = os_strtol( parm, &end_buf, 0 );
@@ -407,7 +407,7 @@ static S32 Console_parseParms(Console_t* pConsole, ConEntry_t *p_token, U16 *pnP
 
             /* Check value */
             if (p_token->u.token.parm[i].flags & CON_PARM_RANGE)
-            {        
+            {
                 if (p_token->u.token.parm[i].flags & CON_PARM_SIGN)
                 {
                     if ((sval < (S32)p_token->u.token.parm[i].low_val) ||
@@ -418,10 +418,10 @@ static S32 Console_parseParms(Console_t* pConsole, ConEntry_t *p_token, U16 *pnP
                             (int)p_token->u.token.parm[i].low_val, (int)p_token->u.token.parm[i].hi_val );
                         return FALSE;
                     }
-                    
+
                 }
                 else
-                {                    
+                {
                     if ((val < p_token->u.token.parm[i].low_val) ||
                         (val > p_token->u.token.parm[i].hi_val) )
                     {
@@ -432,8 +432,8 @@ static S32 Console_parseParms(Console_t* pConsole, ConEntry_t *p_token, U16 *pnP
                     }
                 }
             }
-            
-            if (p_token->u.token.parm[i].flags & CON_PARM_SIGN)                
+
+            if (p_token->u.token.parm[i].flags & CON_PARM_SIGN)
                 p_token->u.token.parm[i].value = sval;
             else
                 p_token->u.token.parm[i].value = val;
@@ -463,26 +463,26 @@ static S32 Console_parseParms(Console_t* pConsole, ConEntry_t *p_token, U16 *pnP
         os_error_printf((S32)CU_MSG_INFO2, (PS8)("Params: %d\n"), nParms );
         for (i=0; i<nParms; i++ )
         {
-            os_error_printf(CU_MSG_INFO2, (PS8)("%d: %s - flags:%d"), 
+            os_error_printf(CU_MSG_INFO2, (PS8)("%d: %s - flags:%d"),
                 i+1, (PS8)p_token->u.token.parm[i].name,
                 p_token->u.token.parm[i].flags);
-            
-            if (p_token->u.token.parm[i].flags & CON_PARM_SIGN)  
+
+            if (p_token->u.token.parm[i].flags & CON_PARM_SIGN)
                 os_error_printf(CU_MSG_INFO2, (PS8)("min:%d, max:%d, value:%d "),(PS8)p_token->u.token.parm[i].low_val, (PS8)p_token->u.token.parm[i].hi_val,
                 (PS8)p_token->u.token.parm[i].value);
             else
                 os_error_printf(CU_MSG_INFO2, (PS8)("min:%ld, max:%ld, value:%ld "),(PS8)p_token->u.token.parm[i].low_val, (PS8)p_token->u.token.parm[i].hi_val,
                 (PS8)p_token->u.token.parm[i].value);
-            
+
             os_error_printf(CU_MSG_INFO2, (PS8)("(%#lx)"),(PS8)p_token->u.token.parm[i].value );
-            
+
             if( p_token->u.token.parm[i].flags & (CON_PARM_LINE | CON_PARM_STRING ))
             {
                 os_error_printf(CU_MSG_INFO2, (PS8)(" - '%s'"), (PS8)(char *) p_token->u.token.parm[i].value );
             }
             os_error_printf(CU_MSG_INFO2, (PS8)("\n") );
         }
-        
+
     }
     *pnParms = nParms;
 
@@ -494,7 +494,7 @@ static ConEntry_t *Console_searchToken( ConEntry_t *p_dir, PS8 name )
 {
     ConEntry_t *p_token;
     U16        name_len = (U16)os_strlen( name );
-    
+
     /* Check alias */
     p_token = p_dir->u.dir.first;
     while( p_token )
@@ -505,7 +505,7 @@ static ConEntry_t *Console_searchToken( ConEntry_t *p_dir, PS8 name )
             return p_token;
         p_token = p_token->next;
     }
-    
+
     /* Check name */
     p_token = p_dir->u.dir.first;
     while( p_token )
@@ -514,7 +514,7 @@ static ConEntry_t *Console_searchToken( ConEntry_t *p_dir, PS8 name )
             break;
         p_token = p_token->next;
     }
-    
+
     return p_token;
 }
 
@@ -524,9 +524,9 @@ VOID  Console_dirHelp(Console_t* pConsole)
 {
     ConEntry_t *p_token;
     S8        print_str[80];
-    
+
     p_token = pConsole->p_cur_dir->u.dir.first;
-    
+
     while( p_token )
     {
         if (p_token->sel == Dir)
@@ -537,7 +537,7 @@ VOID  Console_dirHelp(Console_t* pConsole)
         os_error_printf(CU_MSG_INFO2,  (PS8)print_str );
         p_token = p_token->next;
     }
-    
+
     os_error_printf(CU_MSG_INFO2, (PS8)("Type ? <name> for command help, \"/\"-root, \"..\"-upper\n") );
 }
 
@@ -548,8 +548,8 @@ static VOID  Console_displayHelp(Console_t* pConsole, ConEntry_t *p_token )
     S8 bra, ket;
     U16 nTotalParms = Console_getNParms( p_token );
     U16 i;
-    
-    
+
+
     os_error_printf(CU_MSG_INFO2, (PS8)("%s: %s "), (PS8)p_token->help, (PS8)p_token->name );
     for( i=0; i<nTotalParms; i++ )
     {
@@ -572,7 +572,7 @@ static VOID  Console_displayHelp(Console_t* pConsole, ConEntry_t *p_token )
                 (PS8)p_token->u.token.parm[i].low_val,
                 (PS8)p_token->u.token.parm[i].hi_val,
                 (PS8)(p_token->u.token.parm[i].flags & (CON_PARM_STRING | CON_PARM_LINE)) ? (PS8)(" chars") : (PS8)("") );
-            
+
         }
         os_error_printf(CU_MSG_INFO2, (PS8)("%c \n"),ket );
     }
@@ -586,7 +586,7 @@ static S32 Console_chooseAlias( ConEntry_t *p_dir, ConEntry_t *p_new_token )
     S32         i;
     S8          c;
     PS8         new_alias = NULL;
-    
+
     /* find alias given from user */
     for(i=0; p_new_token->name[i]; i++ )
     {
@@ -596,13 +596,13 @@ static S32 Console_chooseAlias( ConEntry_t *p_dir, ConEntry_t *p_new_token )
             break;
         }
     }
-    
+
     Console_strlwr( p_new_token->name );
-    
+
     if( new_alias )
     {
         p_token = p_dir->u.dir.first;
-        
+
         while( p_token )
         {
             if (p_token->alias && (os_tolower(*p_token->alias ) == *new_alias) )
@@ -617,13 +617,13 @@ static S32 Console_chooseAlias( ConEntry_t *p_dir, ConEntry_t *p_new_token )
         p_new_token->alias = new_alias;
         return 1;
     }
-    
+
     i = 0;
     while( p_new_token->name[i] )
     {
         c = p_new_token->name[i];
         p_token = p_dir->u.dir.first;
-        
+
         while( p_token )
         {
             if (p_token->alias &&
@@ -651,8 +651,8 @@ static U8 Console_ParseString(Console_t* pConsole, PS8 input_string )
     ConEntry_t  *p_token;
     S8          name[MAX_NAME_LEN];
     TokenType_t tType;
-    U16         nParms; 
-        
+    U16         nParms;
+
     if (!pConsole->p_mon_root)
         return 1;
 
@@ -665,7 +665,7 @@ static U8 Console_ParseString(Console_t* pConsole, PS8 input_string )
             return 1;
         }
     }
-    
+
     if( input_string[os_strlen( input_string)-1] == '\n' )
     {
         PS8 s = &input_string[os_strlen( input_string)-1];
@@ -677,13 +677,13 @@ static U8 Console_ParseString(Console_t* pConsole, PS8 input_string )
     /* Interpret empty string as "display directory" */
     if ( pConsole->p_inbuf && !*pConsole->p_inbuf )
         Console_displayDir(pConsole);
-    
+
     while(!pConsole->stop_UI_Monitor && pConsole->p_inbuf && *pConsole->p_inbuf)
     {
         tType = Console_getWord(pConsole, name, MAX_NAME_LEN );
         switch( tType )
         {
-            
+
         case NameToken:
             p_token = Console_searchToken( pConsole->p_cur_dir, name );
             if (p_token == NULL)
@@ -708,19 +708,19 @@ static U8 Console_ParseString(Console_t* pConsole, PS8 input_string )
                 }
             }
             break;
-            
+
         case UpToken: /* Go to upper directory */
             if (pConsole->p_cur_dir->u.dir.upper)
                 pConsole->p_cur_dir = pConsole->p_cur_dir->u.dir.upper;
             Console_displayDir(pConsole);
             break;
-            
+
         case RootToken: /* Go to the root directory */
             if (pConsole->p_cur_dir->u.dir.upper)
                 pConsole->p_cur_dir = pConsole->p_mon_root;
             Console_displayDir(pConsole);
             break;
-            
+
         case HelpToken: /* Display help */
             if (( Console_getWord(pConsole, name, MAX_NAME_LEN ) == NameToken ) &&
                 ((p_token = Console_searchToken( pConsole->p_cur_dir, name )) != NULL ) &&
@@ -729,25 +729,25 @@ static U8 Console_ParseString(Console_t* pConsole, PS8 input_string )
             else
                 Console_dirHelp(pConsole);
             break;
-            
+
         case DirHelpToken:
             Console_displayDir(pConsole);
             os_error_printf(CU_MSG_INFO2, (PS8)("Type ? <name> for command help, \"/\"-root, \"..\"-upper\n") );
             break;
-            
+
         case BreakToken: /* Clear buffer */
             pConsole->p_inbuf = NULL;
             break;
-            
+
         case QuitToken: /* Go to upper directory */
-			return 1;
+            return 1;
 
         case EmptyToken:
             break;
-            
+
         }
     }
-	return 0;
+    return 0;
 }
 
 /* functions */
@@ -764,7 +764,7 @@ THandle Console_Create(const PS8 device_name, S32 BypassSupplicant, PS8 pSupplIf
 
     pConsole->hCuCmd = CuCmd_Create(device_name, pConsole, BypassSupplicant, pSupplIfFile);
     if(pConsole->hCuCmd == NULL)
-    {   
+    {
         Console_Destroy(pConsole);
         return NULL;
     }
@@ -792,7 +792,7 @@ VOID Console_Destroy(THandle hConsole)
 }
 
 VOID Console_Stop(THandle hConsole)
-{   
+{
     ((Console_t*)hConsole)->stop_UI_Monitor = TRUE;
 }
 
@@ -802,18 +802,18 @@ VOID Console_Start(THandle hConsole)
     Console_t* pConsole = (Console_t*)hConsole;
     S8  inbuf[INBUF_LENGTH];
     S32 res;
-        
+
     if (!pConsole->p_mon_root)
         return;
 
     pConsole->stop_UI_Monitor = FALSE;
     Console_displayDir(pConsole);
-    
+
     while(!pConsole->stop_UI_Monitor)
     {
         /* get input string */
         res = os_getInputString(inbuf, sizeof(inbuf));
-        if (res == FALSE) 
+        if (res == FALSE)
         {
             if(pConsole->stop_UI_Monitor)
             {
@@ -823,7 +823,7 @@ VOID Console_Start(THandle hConsole)
             {
                 return;
             }
-        }   
+        }
 
         if(res == OS_GETINPUTSTRING_CONTINUE)
             continue;
@@ -831,7 +831,7 @@ VOID Console_Start(THandle hConsole)
         /* change to NULL terminated strings */
         if( inbuf[os_strlen(inbuf)-1] == '\n' )
             inbuf[os_strlen(inbuf)-1] = 0;
-        
+
         /* parse the string */
         Console_ParseString(pConsole, inbuf);
     }
@@ -852,12 +852,12 @@ VOID Console_GetDeviceStatus(THandle hConsole)
 /***************************************************************
 
   Function : consoleAddDirExt
-  
+
     Description: Add subdirectory
-    
+
       Parameters: p_root - root directory handle (might be NULL)
       name   - directory name
-      
+
         Output:  the new created directory handle
         =NULL - failure
 ***************************************************************/
@@ -870,39 +870,39 @@ THandle Console_AddDirExt(THandle  hConsole,
     ConEntry_t *p_root = (ConEntry_t *)hRoot;
     ConEntry_t *p_dir;
     ConEntry_t **p_e;
-    
+
     if (!p_root)
         p_root = pConsole->p_mon_root;
-    
+
     if(!( p_root && (p_root->sel == Dir)))
         return NULL;
-    
+
     if ( (p_dir=(ConEntry_t *)os_MemoryAlloc(sizeof( ConEntry_t )) ) == NULL)
         return NULL;
-    
+
     os_memset( p_dir, 0, sizeof( ConEntry_t ) );
     os_strncpy( p_dir->name, name, MAX_NAME_LEN );
     os_strncpy( p_dir->help, desc, MAX_HELP_LEN );
     p_dir->sel = Dir;
-    
+
     Console_chooseAlias( p_root, p_dir );
-    
+
     /* Add new directory to the root's list */
     p_dir->u.dir.upper = p_root;
     p_e = &(p_root->u.dir.first);
     while (*p_e)
         p_e = &((*p_e)->next);
     *p_e = p_dir;
-    
+
     return p_dir;
 }
 
 /***************************************************************
 
   Function : consoleAddToken
-  
+
     Description: Add token
-    
+
       Parameters: p_dir  - directory handle (might be NULL=root)
       name   - token name
       help   - help string
@@ -915,7 +915,7 @@ THandle Console_AddDirExt(THandle  hConsole,
       20,               - high value
       0 }               - default value =-1 no default
       or address for string parameter
-      
+
         Output:  E_OK - OK
         !=0 - error
 ***************************************************************/
@@ -929,7 +929,7 @@ consoleErr Console_AddToken(  THandle hConsole,
     Console_t* pConsole = (Console_t*)hConsole;
     ConEntry_t *p_dir = (ConEntry_t *)hDir;
     ConEntry_t *p_token;
-    ConEntry_t **p_e;       
+    ConEntry_t **p_e;
     U16       i;
 
     if (!pConsole->p_mon_root)
@@ -937,34 +937,34 @@ consoleErr Console_AddToken(  THandle hConsole,
 
     if (!p_dir)
       p_dir = pConsole->p_mon_root;
-    
+
     if(!( p_dir && (p_dir->sel == Dir)))
         return E_ERROR;
-    
-    
+
+
     /* Initialize token structure */
     if((p_token = (ConEntry_t *)os_MemoryCAlloc(1,sizeof(ConEntry_t))) == NULL)
     {
      os_error_printf(CU_MSG_ERROR, (PS8)("** no memory **\n") );
       return E_NOMEMORY;
     }
-    
-    
+
+
     /* Copy name */
     os_strncpy( p_token->name, name, MAX_NAME_LEN );
     os_strncpy( p_token->help, help, MAX_HELP_LEN );
     p_token->sel = Token;
     p_token->u.token.f_tokenFunc = p_func;
     p_token->u.token.totalParams = 0;
-    
+
     /* Convert name to lower case and choose alias */
     Console_chooseAlias( p_dir, p_token );
-    
+
     /* Copy parameters */
     if ( p_parms )
     {
-       ConParm_t     *p_tmpParms = p_parms; 
-       
+       ConParm_t     *p_tmpParms = p_parms;
+
        /* find the number of params */
        while( p_tmpParms->name && p_tmpParms->name[0] )
        {
@@ -983,7 +983,7 @@ consoleErr Console_AddToken(  THandle hConsole,
        for (i=0; i < p_token->u.token.totalParams; i++)
        {
          ConParm_t *p_token_parm = &p_token->u.token.parm[i];
-    
+
          /* String parameter must have an address */
          if(p_parms->flags & (CON_PARM_STRING | CON_PARM_LINE))
          {
@@ -994,7 +994,7 @@ consoleErr Console_AddToken(  THandle hConsole,
                 os_MemoryFree(p_token->u.token.name);
                 os_MemoryFree(p_token);
                 return E_NOMEMORY;
-    
+
             }
             if (p_parms->hi_val == 0 || (p_parms->flags & CON_PARM_RANGE) )
             {
@@ -1014,13 +1014,13 @@ consoleErr Console_AddToken(  THandle hConsole,
                 return E_NOMEMORY;
             }
         }
-    
+
         /* Copy parameter */
         *p_token_parm = *p_parms;
         if( p_token_parm->hi_val || p_token_parm->low_val )
             p_token_parm->flags |= CON_PARM_RANGE;
-         
-        p_token->u.token.name[i] = os_MemoryAlloc(os_strlen(p_parms->name));  
+
+        p_token->u.token.name[i] = os_MemoryAlloc(os_strlen(p_parms->name));
         if (p_token->u.token.name[i] == NULL)
         {
             os_error_printf(CU_MSG_ERROR, (PS8)("** Error allocate param name\n"));
@@ -1034,20 +1034,20 @@ consoleErr Console_AddToken(  THandle hConsole,
          ++p_parms;
       } /*end of for loop*/
     }
-    
+
     /* Add token to the directory */
     p_e = &(p_dir->u.dir.first);
     while (*p_e)
       p_e = &((*p_e)->next);
     *p_e = p_token;
-    
+
     return E_OK;
 }
 
 int consoleRunScript( char *script_file, THandle hConsole)
 {
     FILE *hfile = fopen(script_file, "r" );
-	U8 status = 0;
+    U8 status = 0;
     Console_t* pConsole = (Console_t*)hConsole;
 
     if( hfile )
@@ -1058,17 +1058,17 @@ int consoleRunScript( char *script_file, THandle hConsole)
         while( fgets(buf, sizeof(buf), hfile ) )
         {
             status = Console_ParseString(pConsole, buf);
-			if (status == 1)
-				return TRUE;
-			if( pConsole->stop_UI_Monitor )
+            if (status == 1)
+                return TRUE;
+            if( pConsole->stop_UI_Monitor )
                 break;
         }
 
         fclose(hfile);
     }
     else
-	{
-		os_error_printf(CU_MSG_ERROR, (PS8)("ERROR in script: %s \n"), (PS8)script_file);
-	}
+    {
+        os_error_printf(CU_MSG_ERROR, (PS8)("ERROR in script: %s \n"), (PS8)script_file);
+    }
     return pConsole->stop_UI_Monitor;
 }
