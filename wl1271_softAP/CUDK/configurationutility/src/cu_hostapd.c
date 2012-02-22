@@ -109,13 +109,13 @@ void CuHostapd_ShowStatus(void)
 
 void CuHostapd_UpdateKeyInDictionary(TKeyValuePair *pKeyVal)
 {
-	int i;
+    int i;
     TI_BOOL isFound = TI_FALSE;
 
-	for (i=0 ; i< pDictionary->uNumOfKeysFound ; i++)
-	{
-		if (os_strcmp((PS8)pDictionary->keys[i].key, (PS8)pKeyVal->key) == 0) /* if key found store it in dictionary */
-		{
+    for (i=0 ; i< pDictionary->uNumOfKeysFound ; i++)
+    {
+        if (os_strcmp((PS8)pDictionary->keys[i].key, (PS8)pKeyVal->key) == 0) /* if key found store it in dictionary */
+        {
 
             if( pKeyVal->uValueLength == 0 || pKeyVal->uValueLength > MAX_VALUE_LENGTH)
             {
@@ -125,15 +125,15 @@ void CuHostapd_UpdateKeyInDictionary(TKeyValuePair *pKeyVal)
             }
             else
             {
-			// printf("Key to update found: old value = %s, NewValue = %s \n",pDictionary->keys[i].value, pKeyVal->value);
-    			os_memcpy((PVOID)pDictionary->keys[i].value, (PVOID)pKeyVal->value, pKeyVal->uValueLength);
-    			pDictionary->keys[i].value[pKeyVal->uValueLength] = '\0';
-    			pDictionary->keys[i].uValueLength = pKeyVal->uValueLength;
+            // printf("Key to update found: old value = %s, NewValue = %s \n",pDictionary->keys[i].value, pKeyVal->value);
+                os_memcpy((PVOID)pDictionary->keys[i].value, (PVOID)pKeyVal->value, pKeyVal->uValueLength);
+                pDictionary->keys[i].value[pKeyVal->uValueLength] = '\0';
+                pDictionary->keys[i].uValueLength = pKeyVal->uValueLength;
                 pDictionary->aKeyModifiedFlag[i] = TI_TRUE;
             }
             return;
-		}
-	}
+        }
+    }
     /* Key was not found in dictionary. Try to find key in hostapdKeysList */
     for(i = 0; i < HOSTAPD_PARAM_LAST; i++)
     {
@@ -180,7 +180,7 @@ void CuHostapd_Destroy (void)
 
 void CuHostapd_LoadConfFileToMemory (void)
 {
-   FILE	 *pFile;
+   FILE  *pFile;
 
 
    /* Duplicate the original file and work on it only from now on */
@@ -196,7 +196,7 @@ void CuHostapd_LoadConfFileToMemory (void)
    else
    {
        pDictionary = os_MemoryAlloc(sizeof(TDictionary));
-	   FillDictionary(pFile, pDictionary);
+       FillDictionary(pFile, pDictionary);
        os_fclose ((PVOID)pFile);
    }
 }
@@ -211,12 +211,12 @@ static void FillDictionary(FILE *pFile,  TDictionary *pDic)
 
    while ( os_fgets((PS8)line, 99, (PVOID)pFile) != NULL )
    {
-	   if (IsLineContainsKey(line))
-	   {
-		   GetKeyValueFromLine(line, &pDic->keys[i]);
-		   pDic->uNumOfKeysFound++;
-		   i++;
-	 }
+       if (IsLineContainsKey(line))
+       {
+           GetKeyValueFromLine(line, &pDic->keys[i]);
+           pDic->uNumOfKeysFound++;
+           i++;
+     }
    }
 }
 
@@ -246,36 +246,36 @@ static int IsLineContainsKey(TI_UINT8 *pLine)
 static void GetKeyValueFromLine(TI_UINT8 *pLine, TKeyValuePair *pKeyValPair)
 {
 
-	TI_UINT8 endOfLineDelimiter = 10;
-	TI_UINT8 *pTI_UINT8 = pLine;
-	TI_UINT8 i=0;
+    TI_UINT8 endOfLineDelimiter = 10;
+    TI_UINT8 *pTI_UINT8 = pLine;
+    TI_UINT8 i=0;
 
 
-	pKeyValPair->uKeyLength = 0;
-	pKeyValPair->uValueLength = 0;
+    pKeyValPair->uKeyLength = 0;
+    pKeyValPair->uValueLength = 0;
 
 
-	while (*pTI_UINT8 != '=')
-	{
-		pKeyValPair->key[i] = *pTI_UINT8;
-		pKeyValPair->uKeyLength++;
-		pTI_UINT8 ++;
-		i++;
-	}
+    while (*pTI_UINT8 != '=')
+    {
+        pKeyValPair->key[i] = *pTI_UINT8;
+        pKeyValPair->uKeyLength++;
+        pTI_UINT8 ++;
+        i++;
+    }
 
-	pKeyValPair->key[i] = '\0';
-	pTI_UINT8++;
+    pKeyValPair->key[i] = '\0';
+    pTI_UINT8++;
 
-	i=0;
-	while (*pTI_UINT8 != endOfLineDelimiter)
-	{
+    i=0;
+    while (*pTI_UINT8 != endOfLineDelimiter)
+    {
         pKeyValPair->value[i] = *pTI_UINT8;
-		pKeyValPair->uValueLength++;
-		pTI_UINT8++;
-		i++;
-	}
+        pKeyValPair->uValueLength++;
+        pTI_UINT8++;
+        i++;
+    }
 
-	pKeyValPair->value[i] = '\0';
+    pKeyValPair->value[i] = '\0';
 }
 
 
