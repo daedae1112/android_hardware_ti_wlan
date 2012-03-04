@@ -30,10 +30,6 @@
 #include <string.h>
 #include <cutils/properties.h>
 #include <hardware_legacy/power.h>
-
-#define PROGRAM_NAME       "tiap_loader"
-#define DRIVER_PROP_STATUS "wlan.ap.driver.status"
-
 #endif // ANDROID
 
 #include "STADExternalIf.h"
@@ -43,6 +39,8 @@
 
 /* prefix of the AP network interface tiap0 */
 #define TIWLAN_DRV_NAME "tiap"
+#define PROGRAM_NAME       "tiap_loader"
+#define DRIVER_PROP_STATUS "wlan.ap.driver.status"
 
 S8    g_drv_name[IF_NAME_SIZE + 1];
 
