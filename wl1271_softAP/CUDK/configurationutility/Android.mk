@@ -3,7 +3,7 @@ include $(CLEAR_VARS)
 
 STATIC_LIB ?= y
 DEBUG ?= y
-BUILD_SUPPL = n
+BUILD_SUPPL = n # in a separate static lib
 WPA_ENTERPRISE ?= y
 CONFIG_WPS = n
 CONFIG_GEM = n
@@ -33,13 +33,13 @@ endif
 
 #Supplicant image building
 ifeq ($(BUILD_SUPPL), y)
-AP_DEFINES += -D WPA_SUPPLICANT -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
+  AP_DEFINES += -D WPA_SUPPLICANT -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
   -include external/wpa_supplicant/.config
 ifeq ($(CONFIG_WPS), y)
-AP_DEFINES += -DCONFIG_WPS
+  AP_DEFINES += -DCONFIG_WPS
 endif
 ifeq ($(CONFIG_GEM), y)
-AP_DEFINES += -DGEM_SUPPORTED
+  AP_DEFINES += -DGEM_SUPPORTED
 endif
 endif
 
@@ -75,7 +75,7 @@ LOCAL_SRC_FILES:= \
 	src/cu_hostapd.c \
 	src/wpa_core.c
 
-LOCAL_CFLAGS+= -Wall -Wstrict-prototypes $(DEBUGFLAGS) -D__LINUX__ $(AP_DEFINES) -D__BYTE_ORDER_LITTLE_ENDIAN -DDRV_NAME='"tiwlan"'
+LOCAL_CFLAGS+= -Wall -Wstrict-prototypes $(DEBUGFLAGS) -D__LINUX__ $(AP_DEFINES) -D__BYTE_ORDER_LITTLE_ENDIAN -DDRV_NAME='"tiap0"'
 
 LOCAL_CFLAGS += $(ARMFLAGS)
 

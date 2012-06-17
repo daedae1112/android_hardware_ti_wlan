@@ -75,12 +75,12 @@ static S32 IpcWpa_Sockets_Open(TIpcWpa* pIpcWpa, PS8 pSupplIfFile)
 	pIpcWpa->pWpaCtrl = NULL;
 #endif
 	if(pIpcWpa->pWpaCtrl == NULL)
-	{		
+	{
 		os_error_printf(CU_MSG_ERROR, (PS8)"ERROR - IpcWpa_Sockets_Open - can't connect the socket\n");
-        return EOALERR_IPC_WPA_ERROR_CANT_CONNECT_TO_SUPPL;
+		return EOALERR_IPC_WPA_ERROR_CANT_CONNECT_TO_SUPPL;
 	}
 
-	return OK;	
+	return OK;
 }
 
 static VOID IpcWpa_Sockets_Close(TIpcWpa* pIpcWpa)
