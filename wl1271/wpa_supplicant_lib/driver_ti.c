@@ -142,6 +142,18 @@ static int wpa_driver_tista_private_send( void *priv, u32 ioctl_cmd, void *bufIn
 	res = ioctl(drv->ioctl_sock, SIOCIWFIRSTPRIV, &iwr);
 	if (0 != res)
 	{
+		if (errno == 95) { // ignoring TIWLN_REMOVE_RX_DATA_FILTER give more a RX_DATA_COUNTERS_PARAM error
+			switch (ioctl_cmd) {
+			case TIWLN_REMOVE_RX_DATA_FILTER: //0x8000306
+				wpa_printf(MSG_WARNING, "Warning, wifi remove rx data filter command not implemented (ioctl_cmd = %x)", ioctl_cmd);
+				drv->errors=0;
+				return -1;
+			case 0x8021501: // RX_DATA_COUNTERS_PARAM CTRL_DATA_MODULE_PARAM
+				wpa_printf(MSG_WARNING, "Warning, wifi RX_DATA_COUNTERS_PARAM command not implemented (ioctl_cmd = %x)", ioctl_cmd);
+				drv->errors=0;
+				return -1;
+			}
+		}
 		wpa_printf(MSG_ERROR, "ERROR - wpa_driver_tista_private_send - error sending Wext private IOCTL to STA driver (ioctl_cmd = %x,  res = %d, errno = %d)", ioctl_cmd, res, errno);
 		drv->errors++;
 		if (drv->errors > MAX_NUMBER_SEQUENTIAL_ERRORS) {
