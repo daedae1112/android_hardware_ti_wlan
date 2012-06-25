@@ -645,14 +645,16 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 		return( TI2WPA_STATUS(ret) );
 	}
 
-        TI_CHECK_DRIVER( drv->driver_is_loaded, -1 );
+	TI_CHECK_DRIVER( drv->driver_is_loaded, -1 );
 
 	if( os_strcasecmp(cmd, "stop") == 0 ) {
 		wpa_printf(MSG_DEBUG,"Stop command");
 		if ((wpa_driver_wext_get_ifflags(drv->wext, &flags) == 0) &&
 		    (flags & IFF_UP)) {
-			wpa_printf(MSG_ERROR, "TI: %s when iface is UP", cmd);
+			wpa_printf(MSG_WARNING, "TI: %s when iface is UP", cmd);
 			wpa_driver_wext_set_ifflags(drv->wext, flags & ~IFF_UP);
+			// for ics this state is required, but not sure it's correctly reported
+			wpa_msg(drv->ctx, MSG_INFO, WPA_EVENT_DRIVER_STATE "INTERFACE_DISABLED");
 		}
 		ret = wpa_driver_tista_driver_stop(priv);
 		if( ret == 0 ) {
