@@ -65,7 +65,7 @@ LOCAL_C_INCLUDES = \
 	$(LOCAL_PATH)/$(WILINK_ROOT)/platforms/os/common/inc \
 	$(LOCAL_PATH)/$(KERNEL_DIR)/include \
 	$(LOCAL_PATH)/$(WILINK_ROOT)/TWD/FW_Transfer/Export_Inc \
-	external/wpa_supplicant 
+	$(WPA_SUPPL_DIR_INCLUDE)
 
 LOCAL_SRC_FILES:= \
 	src/console.c \

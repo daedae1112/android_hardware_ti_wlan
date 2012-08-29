@@ -57,7 +57,7 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/$(WILINK_ROOT)/platforms/os/linux/inc \
         $(LOCAL_PATH)/$(WILINK_ROOT)/platforms/os/common/inc \
         $(LOCAL_PATH)/$(WILINK_ROOT)/TWD/FirmwareApi \
-        external/wpa_supplicant \
+        $(WPA_SUPPL_DIR_INCLUDE) \
         $(LOCAL_PATH)/$(CUDK_ROOT)/configurationutility/inc
 
 LOCAL_MODULE:=libtiOsLibAP
