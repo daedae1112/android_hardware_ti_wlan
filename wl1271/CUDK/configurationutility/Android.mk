@@ -58,7 +58,7 @@ endif
 #Supplicant image building
 ifeq ($(BUILD_SUPPL), y)
 DK_DEFINES += -D WPA_SUPPLICANT -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
--include $(WPA_SUPPL_DIR)/.config
+-include $(WPA_SUPPL_DIR)/android.config
 ifdef CONFIG_WPS
 	DK_DEFINES += -DCONFIG_WPS
 endif

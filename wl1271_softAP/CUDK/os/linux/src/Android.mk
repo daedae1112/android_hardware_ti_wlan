@@ -23,7 +23,7 @@ endif
 
 ifeq ($(BUILD_SUPPL), y)
   AP_DEFINES += -D WPA_SUPPLICANT -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
-  -include external/wpa_supplicant/.config
+  -include external/wpa_supplicant/android.config
   ifeq ($(CONFIG_WPS), y)
     AP_DEFINES += -DCONFIG_WPS
   endif

@@ -23,7 +23,7 @@ endif
 
 ifeq ($(BUILD_SUPPL), y)
   DK_DEFINES += -D WPA_SUPPLICANT -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
-  -include $(CUDK_ROOT)/$(TI_SUPP_LIB_DIR)/.config
+  -include $(CUDK_ROOT)/$(TI_SUPP_LIB_DIR)/android.config
   ifeq ($(CONFIG_EAP_WSC), y)
     DK_DEFINES += -DCONFIG_EAP_WSC
   endif
